@@ -1,103 +1,93 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import TopBar from "@/components/TopBar";
+import InterestToggle from "@/components/InterestToggle";
+import WriteButton from "@/components/WriteButton";
+import PostCard from "@/components/PostCard";
+import { getMockFeed } from "@/lib/mock";
+import type { FeedItem } from "@/types";
+
+const BRAND = "#6163FF";
+
+export default function Page() {
+  const router = useRouter();
+  const [interestOn, setInterestOn] = useState(false);
+  const [items, setItems] = useState<FeedItem[]>([]);
+
+  useEffect(() => {
+    setItems(getMockFeed({ interestOn }));
+  }, [interestOn]);
+
+  function refreshItemList() {
+    setItems(prev => {
+      const arr = [...prev];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    });
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="px-4 pb-28">
+      <TopBar />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      <div className="flex items-center justify-between mt-3">
+        <div className="flex gap-8">
+          <button className="text-[18px] font-semibold">도움</button>
+          <button
+            className="text-[18px] font-semibold text-neutral-400"
+            onClick={() => router.push("/expert")} 
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            고수
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <InterestToggle value={interestOn} onChange={setInterestOn} brand={BRAND} />
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <span className="text-xl font-bold">고수님을 찾고 있어요</span>
+        <span className="text-lg">🧐</span>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-3">
+        {items.map(post => (
+          <PostCard key={post.id} item={post} brand={BRAND} />
+        ))}
+      </div>
+
+      {/* ✅ 새로고침 버튼 */}
+      <div className="mt-4 mb-8">
+        <button
+          onClick={refreshItemList}
+          className="flex items-center gap-2 text-white font-semibold text-[16px] rounded-full px-4 py-2 shadow"
+          style={{ backgroundColor: "#000" }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          새로고침
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M23 4v6h-6" stroke="#fff" strokeWidth="2" />
+            <path d="M1 20v-6h6" stroke="#fff" strokeWidth="2" />
+            <path d="M3.51 9A9 9 0 0 1 20 8" stroke="#fff" strokeWidth="2" />
+            <path d="M20.49 15A9 9 0 0 1 4 16" stroke="#fff" strokeWidth="2" />
+          </svg>
+        </button>
+      </div>
+
+      {/* 글쓰기 버튼 - floating */}
+      <div
+        className="fixed left-0 right-0 pointer-events-none"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 88px)" }} // 네비 위 + safe-area
+      >
+        <div className="mx-auto max-w-[440px] px-4 flex justify-end">
+          <div className="pointer-events-auto">
+            <WriteButton onClick={() => alert("글쓰기 버튼 클릭")} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

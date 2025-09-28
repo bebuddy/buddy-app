@@ -1,26 +1,22 @@
+/* src/app/globals.css */
 @import "tailwindcss";
 
+/* (우리 앱용 추가 스타일) */
+@layer base {
+  html { font-size: 18px; }
+  @media (min-width: 480px) { html { font-size: 19px; } }
+  @media (min-width: 640px) { html { font-size: 20px; } }
+  button { touch-action: manipulation; }
+}
+
+@layer components {
+  .card { @apply rounded-2xl border border-neutral-200 bg-white shadow-sm; }
+  .pill { @apply px-3 py-1 rounded-full bg-neutral-100 text-[16px]; }
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand: #6163ff;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+.brand { color: var(--brand); }
+.brand-bg { background-color: var(--brand); }
+.brand-border { border-color: var(--brand); }
