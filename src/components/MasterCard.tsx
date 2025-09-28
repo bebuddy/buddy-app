@@ -1,3 +1,5 @@
+// 고수 카드
+
 "use client";
 
 type ArticleRandomRes = {
