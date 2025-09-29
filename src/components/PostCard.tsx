@@ -1,3 +1,5 @@
+// 배움 카드
+
 "use client";
 import type { FeedItem } from "@/types";
 
