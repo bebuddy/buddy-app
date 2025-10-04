@@ -1,19 +1,18 @@
-// top bar
-
-"use client";
+import Image from "next/image";
 
 export default function TopBar() {
   return (
-    <div className="pt-4 pb-3 flex items-center justify-between">
-      <div className="flex items-baseline gap-2">
-        <div className="text-3xl font-extrabold tracking-tight">벗</div>
-      </div>
-      {/* 우상단 회색 동그라미 = 내정보 */}
-      <button
-        aria-label="내 정보"
-        className="w-9 h-9 rounded-full bg-neutral-300"
-        onClick={() => alert("내 정보로 이동")}
+    <div className="flex items-center justify-between mt-4">
+      {/* ✅ SVG 로고 삽입 */}
+      <Image
+        src="/logo.svg" // public/logo.svg 경로 기준
+        alt="벗 로고"
+        width={36}      // 기존 ‘벗’ 글자 크기에 맞게 조정 (필요시 변경)
+        height={36}
+        priority
       />
+
+      <div className="w-8 h-8 bg-gray-200 rounded-full" /> {/* 프로필 자리 */}
     </div>
   );
 }
