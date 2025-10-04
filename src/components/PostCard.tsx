@@ -34,7 +34,7 @@ export default function PostCard({
           }}
         >
           <span>▼</span>
-          <span>{item.dong}</span>
+          <span>{item.location}</span>
         </button>
       </div>
 
@@ -52,7 +52,7 @@ export default function PostCard({
 
       {/* 본문 */}
       <p className="mt-2 text-[18px] text-neutral-700">
-        {item.body.length > 60 ? item.body.slice(0, 60) + "..." : item.body}
+        {item.content && item.content.length > 60 ? item.content.slice(0, 60) + "..." : item.content}
       </p>
 
       {/* 이미지 자리 */}

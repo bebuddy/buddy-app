@@ -1,15 +1,8 @@
 // 고수 카드
 
 "use client";
+import { ArticleRandomRes } from "@/types";
 
-type ArticleRandomRes = {
-  field: string;
-  title: string;
-  location: string;
-  mentorName?: string;
-  birthDate?: string;   // "1970-01-01"
-  imageUrlL?: string;
-};
 
 export default function MasterCard({
   item,
@@ -24,7 +17,9 @@ export default function MasterCard({
     ? `${overlay}, url(${item.imageUrlL})`
     : `${overlay}, linear-gradient(180deg,#cfcfcf,#9e9e9e)`;
 
-  const ageLabel = getKDecadeLabel(item.birthDate); // "50대 중반" 같은 라벨
+  const ageLabel = getKDecadeLabel(item.birth_date); // "50대 중반" 같은 라벨
+
+  console.log(item.birth_date)
 
   return (
     <div
@@ -53,7 +48,7 @@ export default function MasterCard({
         </div>
 
         <div className="mt-2 text-[20px] font-extrabold">
-          {item.mentorName ? `${item.mentorName}` : "[이름 or 닉네임]"}
+          {item.name ? `${item.name}` : "[이름 or 닉네임]"}
           {ageLabel ? `, ${ageLabel}` : ""}
         </div>
 
@@ -63,7 +58,7 @@ export default function MasterCard({
             className="px-3 py-1 rounded-full text-[16px] bg-white"
             style={{ border: `1.5px solid ${brand}`, color: brand }}
           >
-            {item.field}
+            {item.category}
           </span>
         </div>
       </div>
