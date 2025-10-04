@@ -1,20 +1,27 @@
+// src/app/expert/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
+import RoleTabs from "@/components/RoleTabs";
 import MasterCard from "@/components/MasterCard";
+import RegisterButton from "@/components/RegisterButton";
+import InterestToggle from "@/components/InterestToggle";
 import { getSeniorPostsByRandom } from "@/actions/getSeniorPostsByRandom";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ArticleRandomRes } from "@/types";
+import BottomNav from "@/components/BottomNav";
 
 const BRAND = "#6163FF";
 
 export default function ExpertPage() {
+  const router = useRouter();
+  const [interestOn, setInterestOn] = useState(false);
   const [isInterested, setIsInterested] = useState(true);
   const [items, setItems] = useState<ArticleRandomRes[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  /** 새로고침 시 refresh */
   async function refreshItemList() {
     setIsLoading(true);
     try {
@@ -27,48 +34,35 @@ export default function ExpertPage() {
     }
   }
 
-
   useEffect(() => {
-    refreshItemList()
-  }, [])
+    refreshItemList();
+  }, []);
 
   return (
-    <div className="px-4 pb-28">
+    <div
+      className="px-4"
+      style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }} // 하단 네비 대비
+    >
+
       <TopBar />
-
-      {/* 상단 탭/토글 */}
       <div className="flex items-center justify-between mt-3">
-        <div className="flex gap-8">
-          <button className="text-[18px] font-semibold text-neutral-400" onClick={() => history.back()}>
-            도움
-          </button>
-          <button className="text-[18px] font-semibold">고수</button>
-        </div>
-
-        <button
-          className="text-[18px] font-semibold"
-          onClick={() => setIsInterested(v => !v)}
-        >
-          관심 분야 <span style={{ color: BRAND }}>{isInterested ? "ON" : "OFF"}</span>
-        </button>
+        {/* ✅ 기존 후배/선배 버튼 묶음 → RoleTabs로 교체 */}
+        <RoleTabs /> 
+        <InterestToggle value={interestOn} onChange={setInterestOn} brand={BRAND} />
       </div>
 
-      <div className="mt-3 text-[18px] text-neutral-700">
-        궁금한 거 다! 알려주는 멘토 찾아드려요!
+      <div className="mt-3 flex items-center gap-2">
+        <span className="text-xl font-bold">궁금한 거 다~ 알려주는 선배를 찾아드려요! 👨🏻‍🏫</span>
       </div>
 
       {/* 카드 리스트 */}
       <div className="mt-3 flex flex-col gap-3">
-        {/* 로딩 스피너 */}
-        {isLoading &&
-          <LoadingSpinner height={400} />
-        }
-        {!isLoading && items.map((it, idx) => (
-          <MasterCard key={idx} item={it} brand={BRAND} />
-        ))}
+        {isLoading && <LoadingSpinner height={400} />}
+        {!isLoading &&
+          items.map((it, idx) => <MasterCard key={idx} item={it} brand={BRAND} />)}
       </div>
 
-      {/*  새로고침 버튼 */}
+      {/* 새로고침 버튼 (원하면 RefreshButton으로 교체 가능) */}
       <div className="mt-4 mb-8 flex justify-start">
         <button
           onClick={refreshItemList}
@@ -84,6 +78,19 @@ export default function ExpertPage() {
           </svg>
         </button>
       </div>
+
+      {/* 지원하기 버튼 - floating */}
+      <div
+        className="fixed left-0 right-0 pointer-events-none"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
+      >
+        <div className="mx-auto max-w-[440px] px-4 flex justify-end">
+          <div className="pointer-events-auto">
+            <RegisterButton onClick={() => router.push("/expert/register")} />
+          </div>
+        </div>
+      </div>
+      <BottomNav />
     </div>
   );
 }
