@@ -1,18 +1,29 @@
-// 새로고침 버튼 
-
 "use client";
 import { RefreshCcw } from "lucide-react";
 
-export default function RefreshButton({ onClick }: { onClick: () => void }) {
+type Props = {
+  onClick: () => void;
+  size?: "md" | "sm"; // ✅ 사이즈 옵션 추가
+  className?: string;
+};
+
+export default function RefreshButton({ onClick, size = "md", className = "" }: Props) {
+  const sizeClasses =
+    size === "sm"
+      ? "text-[14px] px-3 py-1.5 gap-1"
+      : "text-[16px] px-4 py-2 gap-2";
+
+  const iconSize = size === "sm" ? 16 : 18;
+
   return (
-    <div
-      className="flex items-center gap-2 text-white font-semibold text-[16px] bg-black rounded-full px-4 py-2 shadow"
+    <button
       onClick={onClick}
-      role="button"
+      className={`inline-flex items-center ${sizeClasses} text-white font-semibold bg-black rounded-full shadow ${className}`}
       aria-label="새로고침"
+      type="button"
     >
       <span>새로고침</span>
-      <RefreshCcw width={18} height={18} className="text-white" />
-    </div>
+      <RefreshCcw width={iconSize} height={iconSize} className="text-white" />
+    </button>
   );
 }

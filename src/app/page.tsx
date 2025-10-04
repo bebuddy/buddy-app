@@ -41,12 +41,12 @@ export default function Page() {
       <TopBar />
       <div className="flex items-center justify-between mt-3">
         <div className="flex gap-8">
-          <button className="text-[18px] font-semibold">도움</button>
+          <button className="text-[18px] font-semibold">후배</button>
           <button
             className="text-[18px] font-semibold text-neutral-400"
             onClick={() => router.push("/expert")}
           >
-            고수
+            선배
           </button>
         </div>
 
@@ -54,7 +54,7 @@ export default function Page() {
       </div>
 
       <div className="mt-3 flex items-center gap-2">
-        <span className="text-xl font-bold">고수님을 찾고 있어요</span>
+        <span className="text-xl font-bold">선배님을 찾고 있어요</span>
         <span className="text-lg">🧐</span>
       </div>
 
@@ -92,7 +92,7 @@ export default function Page() {
       >
         <div className="mx-auto max-w-[440px] px-4 flex justify-end">
           <div className="pointer-events-auto">
-            <WriteButton onClick={() => alert("글쓰기 버튼 클릭")} />
+            <WriteButton onClick={() => router.push("/write")} />
           </div>
         </div>
       </div>
