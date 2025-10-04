@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
 import InterestToggle from "@/components/InterestToggle";
+import RoleTabs from "@/components/RoleTabs";
 import WriteButton from "@/components/WriteButton";
 import PostCard from "@/components/PostCard";
+import RefreshButton from "@/components/RefreshButton";
 import type { FeedItem } from "@/types";
 import { getJuniorPostsByRandom } from "@/actions/getJuniorPostsByRandom";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import BottomNav from "@/components/BottomNav";
 
 const BRAND = "#6163FF";
 
@@ -40,22 +43,13 @@ export default function Page() {
     <div className="relative px-4 pb-28 min-h-screen">
       <TopBar />
       <div className="flex items-center justify-between mt-3">
-        <div className="flex gap-8">
-          <button className="text-[18px] font-semibold">후배</button>
-          <button
-            className="text-[18px] font-semibold text-neutral-400"
-            onClick={() => router.push("/expert")}
-          >
-            선배
-          </button>
-        </div>
-
+        {/* ✅ 기존 후배/선배 버튼 묶음 → RoleTabs로 교체 */}
+        <RoleTabs /> 
         <InterestToggle value={interestOn} onChange={setInterestOn} brand={BRAND} />
       </div>
 
       <div className="mt-3 flex items-center gap-2">
-        <span className="text-xl font-bold">선배님을 찾고 있어요</span>
-        <span className="text-lg">🧐</span>
+        <span className="text-xl font-bold">선배님을 찾고 있어요 📚</span>
       </div>
 
       <div className="mt-3 flex flex-col gap-3">
@@ -68,21 +62,9 @@ export default function Page() {
         ))}
       </div>
 
-      {/* 새로고침 버튼 */}
-      <div className="mt-4 mb-8">
-        <button
-          onClick={refreshItemList}
-          className="flex items-center gap-2 text-white font-semibold text-[16px] rounded-full px-4 py-2 shadow"
-          style={{ backgroundColor: "#000" }}
-        >
-          새로고침
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M23 4v6h-6" stroke="#fff" strokeWidth="2" />
-            <path d="M1 20v-6h6" stroke="#fff" strokeWidth="2" />
-            <path d="M3.51 9A9 9 0 0 1 20 8" stroke="#fff" strokeWidth="2" />
-            <path d="M20.49 15A9 9 0 0 1 4 16" stroke="#fff" strokeWidth="2" />
-          </svg>
-        </button>
+      {/* 새로고침 버튼 (컴포넌트 사용 / 컴팩트) */}
+      <div className="mt-4 mb-8 w-fit">
+        <RefreshButton onClick={refreshItemList} size="sm" />
       </div>
 
       {/* 글쓰기 버튼 - floating */}
@@ -96,6 +78,8 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      <BottomNav />
     </div>
   );
 }
