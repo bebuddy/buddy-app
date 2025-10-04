@@ -77,7 +77,7 @@ function getKDecadeLabel(birth?: string) {
   const y = Number(birth.slice(0, 4));
   if (!y) return "";
   const now = new Date();
-  let age = now.getFullYear() - y;
+  const age = now.getFullYear() - y;
   // 월/일은 무시(대략치). 필요하면 month/day 비교로 -1 보정 가능.
   const decade = Math.floor(age / 10) * 10; // 50, 60 ...
   const mod = age % 10;

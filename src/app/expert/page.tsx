@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import TopBar from "@/components/TopBar";
 import MasterCard from "@/components/MasterCard";
-import WriteButton from "@/components/WriteButton"; // 글쓰기 버튼은 떠있게 유지
 
 const BRAND = "#6163FF";
 
