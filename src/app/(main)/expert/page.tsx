@@ -1,6 +1,5 @@
 // src/app/expert/page.tsx
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
@@ -8,10 +7,10 @@ import RoleTabs from "@/components/RoleTabs";
 import MasterCard from "@/components/MasterCard";
 import RegisterButton from "@/components/RegisterButton";
 import InterestToggle from "@/components/InterestToggle";
-import { getSeniorPostsByRandom } from "@/actions/getSeniorPostsByRandom";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ArticleRandomRes } from "@/types";
 import BottomNav from "@/components/BottomNav";
+import { getSeniorPostsByRandom } from "@/actions/post";
 
 const BRAND = "#6163FF";
 

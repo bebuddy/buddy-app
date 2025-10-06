@@ -29,7 +29,7 @@ export default function RoleTabs({ labels }: Props) {
       <button
         aria-current={active === "junior" ? "page" : undefined}
         className={`${base} ${active === "junior" ? activeClasses : inactiveClasses}`}
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/junior")}
       >
         {labels?.junior ?? "후배"}
       </button>
