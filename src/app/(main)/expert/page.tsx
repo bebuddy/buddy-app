@@ -8,9 +8,9 @@ import MasterCard from "@/components/MasterCard";
 import RegisterButton from "@/components/RegisterButton";
 import InterestToggle from "@/components/InterestToggle";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { ArticleRandomRes } from "@/types";
 import BottomNav from "@/components/BottomNav";
 import { getSeniorPostsByRandom } from "@/actions/post";
+import { ArticleRandomRes } from "@/types/postType";
 
 const BRAND = "#6163FF";
 

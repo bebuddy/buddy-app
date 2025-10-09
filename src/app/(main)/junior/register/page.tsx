@@ -9,6 +9,9 @@ import LabeledTextarea from "@/components/LabeledTextarea";
 import ChipGroup from "@/components/ChipGroup";
 import PriceInput from "@/components/PriceInput";
 import PhotoUpload from "@/components/PhotoUpload";
+import { createJuniorPostAction } from "@/actions/post";
+import { ClassKey, ClassType, GenderKey, GenderType, LevelType, SeniorKey, SeniorType, TimeKey, TimeType, TimeValue } from "@/types/postType";
+import { useRouter } from "next/navigation";
 
 const BRAND = "#6163FF"; // ✅ 글쓰기 화면 색상
 
@@ -22,7 +25,7 @@ const MENTOR_TYPES = [
 ] as const;
 
 const MEET_PREF = ["대면이 좋아요", "비대면이 좋아요", "상관없어요"] as const;
-const DAYS = ["월","화","수","목","금","토","일"] as const;
+const DAYS = ["월", "화", "수", "목", "금", "토", "일"] as const;
 const TIMES = [
   "아침 (06:00 ~ 10:00)",
   "오전 (10:00 ~ 12:00)",
@@ -35,6 +38,7 @@ const TIMES = [
 type Unit = "시간" | "건당";
 
 export default function WritePage() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
 
@@ -48,6 +52,9 @@ export default function WritePage() {
   const [price, setPrice] = useState("");
   const [unit, setUnit] = useState<Unit | null>(null);
   const [negotiable, setNegotiable] = useState(false);
+  //photoUpload의 fileKey 리스트
+  const [fileKeys, setFileKeys] = useState<string[]>([]);
+
 
   const isValid = useMemo(() => {
     const hasTitle = title.trim().length > 0;
@@ -56,11 +63,42 @@ export default function WritePage() {
     const hasPrice = negotiable || (price.trim().length > 0 && /^\d+$/.test(price));
     return hasTitle && hasDesc && hasMeet && hasPrice;
   }, [title, desc, meetPref, price, negotiable]);
+  async function handleSubmit() {
+    if (!isValid
+      // || !user
+    )
+      return;
 
-  function handleSubmit() {
-    if (!isValid) return;
-    alert(`글 등록 완료! (데모)
-희망 단가: ${price ? `${price}원` : "미입력"}${unit ? ` / ${unit}` : ""}`);
+    const req = {
+      title,
+      content: desc,
+      level: level as LevelType,
+      datesTimes: {
+        day: days,
+        time: times.includes("시간대 협의")
+          ? "시간대 협의" as const
+          : times.map((t) => TimeType[t as TimeKey]) as TimeValue[],
+      },
+      seniorType: mentorTypes,
+      classType: ClassType[meetPref as ClassKey]!,
+      budget: negotiable ? null : Number(price),
+      budgetType: negotiable ? "협의" as const : (unit || "시간"),
+      seniorGender: GenderType[mentorGender as GenderKey]!,
+      fileKeys: [], // ✅ PhotoUpload 결과 연결 시 여기에 넣을 예정
+    };
+
+    const mockUserId = "34e51d62-e7fc-4486-80c2-5b578b843e26";
+
+    const res = await createJuniorPostAction(req,
+      mockUserId
+    );
+
+    if (res.success) {
+      alert("✅ 글 등록이 완료되었습니다!");
+      router.push("/junior");
+    } else {
+      alert(`❌ 등록 실패: ${res.message}`);
+    }
   }
 
   return (
@@ -190,7 +228,7 @@ export default function WritePage() {
       </div>
 
       <div className="mt-7">
-        <PhotoUpload brand={BRAND} />
+        <PhotoUpload brand={BRAND} onChange={setFileKeys} />
       </div>
 
       <div className="h-8" />
