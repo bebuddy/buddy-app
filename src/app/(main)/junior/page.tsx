@@ -8,10 +8,10 @@ import RoleTabs from "@/components/RoleTabs";
 import WriteButton from "@/components/WriteButton";
 import PostCard from "@/components/PostCard";
 import RefreshButton from "@/components/RefreshButton";
-import type { FeedItem } from "@/types";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNav from "@/components/BottomNav";
 import { getJuniorPostsByRandom } from "@/actions/post";
+import { FeedItem } from "@/types/postType";
 
 const BRAND = "#6163FF";
 
