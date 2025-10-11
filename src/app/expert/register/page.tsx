@@ -17,15 +17,17 @@ const MENTOR_TYPES = [
   "협력적인","피드백에 유연한","신뢰할 수 있는","적극적인","밝고 유쾌한","실행력 있는",
   "꾸준한","수용적인","공감능력","열려있는","밝은",
 ] as const;
+const BRAND = "#6163FF";
 
 const MEET_PREF = ["대면이 좋아요","비대면이 좋아요","상관없어요"] as const;
-const DAYS = ["월","화","수","목","금","토","일"] as const;
+const DAYS = ["월","화","수","목","금","토","일","요일 협의"] as const;
 const TIMES = [
   "아침 (06:00 ~ 10:00)",
   "오전 (10:00 ~ 12:00)",
   "오후 (12:00 ~ 18:00)",
   "저녁 (18:00 ~ 22:00)",
   "야간 (22:00 이후)",
+  "시간대 협의"
 ] as const;
 
 type Unit = "시간" | "건당";
@@ -169,13 +171,24 @@ export default function ExpertRegisterPage() {
         <div className="text-[18px] font-extrabold text-neutral-900">
           과외비 하한을 입력해주세요.
         </div>
+
         <PriceInput
           value={price}
           onChange={setPrice}
           unit={unit}
           onUnitChange={setUnit}
           negotiable={negotiable}
-          onToggleNegotiable={() => setNegotiable(v => !v)}
+          onToggleNegotiable={() =>
+            setNegotiable((prev) => {
+              const next = !prev;
+              if (next) {        // ✅ 협의해요 ON 시 값/단가 리셋 (선택)
+                setPrice("");
+                setUnit(null);
+              }
+              return next;
+            })
+          }
+          brand={BRAND}          // (선택) 색상 통일
         />
       </div>
 
