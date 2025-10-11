@@ -1,81 +1,159 @@
-// src/components/PhotoUpload.tsx
 "use client";
+import { getUploadUrlAction, insertFilesAction /*, deleteFilesAction */ } from "@/actions/file";
 import { useEffect, useRef, useState } from "react";
 
-type Props = {
+interface PhotoUploadProps {
   brand?: string;
-  /** 크롭(3:2)된 파일 목록을 부모에 전달 */
-  onFilesChange?: (files: File[]) => void;
+  onChange?: (fileKeys: string[]) => void;   // 업로드된 key 배열 전달
+}
+
+type PreviewItem = {
+  id: string;         // 로컬 식별자
+  file: File;
+  url: string;        // object URL (썸네일)
+  key?: string;       // 업로드 완료 시 S3 key
+  uploaded: boolean;  // 업로드 여부
 };
 
-type Thumb = {
-  id: string;
-  url: string;   // 미리보기용 ObjectURL
-  file: File;    // 3:2로 크롭된 파일
-};
-
-export default function PhotoUpload({ brand = "#33AF83", onFilesChange }: Props) {
+export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [items, setItems] = useState<Thumb[]>([]);
+  const [items, setItems] = useState<PreviewItem[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   function openPicker() {
     inputRef.current?.click();
   }
 
+  // 파일 선택
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(e.target.files || []);
-    if (picked.length === 0) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
-    // 최대 10장 제한
-    const remain = Math.max(0, 10 - items.length);
-    const useFiles = picked.slice(0, remain);
+    // 프리뷰 반영
+    const newItems: PreviewItem[] = files.map((f) => ({
+      id: crypto.randomUUID(),
+      file: f,
+      url: URL.createObjectURL(f),
+      uploaded: false,
+    }));
 
-    const processed = await Promise.all(
-      useFiles.map(async (f) => {
-        const cropped = await cropToThreeTwo(f);
-        const url = URL.createObjectURL(cropped);
-        return { id: crypto.randomUUID(), url, file: cropped } as Thumb;
-      })
-    );
+    setItems((prev) => [...prev, ...newItems]);
 
-    const next = [...items, ...processed];
-    setItems(next);
-    onFilesChange?.(next.map((t) => t.file));
-
-    // 같은 파일 재선택 가능하게 초기화
+    // 선택 즉시 업로드
+    await handleUpload(newItems);
+    // input 값 초기화(같은 파일 다시 선택 가능)
     e.target.value = "";
   }
 
-  function removeOne(id: string) {
+  // 업로드 처리
+  async function handleUpload(targets: PreviewItem[]) {
+    if (!targets.length) return;
+
+    const bucket = process.env.NEXT_PUBLIC_S3_BUCKET_NAME!;
+    setIsUploading(true);
+
+    try {
+      // S3 업로드
+      const uploadedFiles: { key: string; name: string; size: number; _id: string }[] = [];
+
+      await Promise.all(
+        targets.map(async (item) => {
+          const file = item.file;
+
+          // presigned URL 발급
+          const { uploadUrl, key } = await getUploadUrlAction(bucket, file.name);
+
+          // 실제 업로드
+          const res = await fetch(uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": file.type },
+            body: file,
+          });
+          if (!res.ok) throw new Error(`${file.name} 업로드 실패`);
+
+          uploadedFiles.push({ key, name: file.name, size: file.size, _id: item.id });
+
+          // UI 상태 업데이트(개별 항목 업로드 완료 표기)
+          setItems((prev) =>
+            prev.map((it) => (it.id === item.id ? { ...it, uploaded: true, key } : it))
+          );
+        })
+      );
+
+      // DB 기록
+      const dbRes = await insertFilesAction(
+        uploadedFiles.map(({ key, name, size }) => ({ key, name, size }))
+      );
+      if (!dbRes.success) throw new Error("file 메타데이터 저장 실패");
+
+      // 상위에 누적 key 전달
+      const keys = (prevKeys: string[]) =>
+        [
+          ...prevKeys,
+          ...uploadedFiles.map((f) => f.key),
+        ];
+      const allKeys = [
+        ...items.map((i) => i.key).filter(Boolean) as string[],
+        ...uploadedFiles.map((f) => f.key),
+      ];
+      onChange?.(Array.from(new Set(allKeys)));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  // 썸네일 X로 삭제
+  async function removeItem(id: string) {
     setItems((prev) => {
-      const target = prev.find((x) => x.id === id);
-      if (target) URL.revokeObjectURL(target.url);
-      const next = prev.filter((x) => x.id !== id);
-      onFilesChange?.(next.map((t) => t.file));
+      const target = prev.find((i) => i.id === id);
+      if (!target) return prev;
+
+      // 프리뷰 URL 해제
+      if (target.url) URL.revokeObjectURL(target.url);
+
+      const next = prev.filter((i) => i.id !== id);
+
+      // 업로드된 항목이면 onChange로 key 제거
+      if (target.uploaded && target.key) {
+        const remainingKeys = next
+          .map((i) => i.key)
+          .filter(Boolean) as string[];
+        onChange?.(Array.from(new Set(remainingKeys)));
+
+        // 서버/스토리지에서 실제 삭제까지 필요하면 여기서 실행
+        // void deleteFilesAction([target.key]); // 존재한다면 사용
+      }
+
       return next;
     });
   }
 
+  // 컴포넌트 unmount 시 메모리 정리
   useEffect(() => {
     return () => {
-      // 언마운트 시 URL 정리
-      items.forEach((t) => URL.revokeObjectURL(t.url));
+      items.forEach((i) => i.url && URL.revokeObjectURL(i.url));
     };
   }, [items]);
 
   return (
     <div className="flex flex-col gap-3">
-      {/* 업로드 버튼 */}
       <button
         onClick={openPicker}
+        disabled={isUploading}
         className="w-full h-[56px] flex items-center justify-center gap-2 
                    rounded-lg border border-neutral-300 
                    text-[18px] font-semibold bg-white"
       >
-        <span className="text-neutral-900">사진 등록</span>
-        <span style={{ color: brand }} className="text-[22px] font-bold leading-none">
-          ＋
+        <span className="text-neutral-900">
+          {isUploading ? "업로드 중..." : "사진 등록"}
         </span>
+        {!isUploading && (
+          <span style={{ color: brand }} className="text-[22px] font-bold leading-none">
+            ＋
+          </span>
+        )}
       </button>
 
       <input
@@ -87,34 +165,47 @@ export default function PhotoUpload({ brand = "#33AF83", onFilesChange }: Props)
         onChange={onPick}
       />
 
-      {/* 썸네일 그리드 (1:1) */}
+      {/* 썸네일 그리드 */}
       {items.length > 0 && (
         <div className="grid grid-cols-3 gap-6">
-          {items.map((t) => (
-            <div key={t.id} className="relative aspect-square rounded-xl overflow-hidden bg-neutral-100">
-              <img src={t.url} alt="preview" className="w-full h-full object-cover" draggable={false} />
+          {items.map((item) => (
+            <div key={item.id} className="relative group">
+              {/* 썸네일: 원본 비율로 미리보기 (상세는 3:2로 보여줄 예정) */}
+              <img
+                src={item.url}
+                alt={item.file.name}
+                className="w-full h-[100px] object-cover rounded-md border border-neutral-200"
+              />
+
+              {/* 삭제 버튼 */}
               <button
                 type="button"
-                onClick={() => removeOne(t.id)}
-                aria-label="삭제"
-                className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full 
-                           bg-black/60 text-white text-sm leading-7 text-center"
+                onClick={() => removeItem(item.id)}
+                className="absolute -top-2 -right-2 hidden group-hover:block
+                           w-7 h-7 rounded-full bg-black/70 text-white text-sm
+                           flex items-center justify-center"
+                aria-label="remove photo"
+                title="삭제"
               >
                 ×
               </button>
+
+              {/* 업로드 상태 배지(선택) */}
+              {!item.uploaded && (
+                <span className="absolute bottom-1 left-1 px-2 py-[2px] text-xs rounded bg-white/90 border">
+                  업로드중…
+                </span>
+              )}
             </div>
           ))}
         </div>
       )}
-
-      <div className="text-[13px] text-neutral-500 text-center">
-        {items.length}/10 장 등록됨
-      </div>
     </div>
   );
 }
 
-/* ---------- 유틸: 파일을 가운데 기준 3:2로 크롭 ---------- */
+/* ---------- (선택) 3:2 크롭 유틸 ---------- */
+/** 저장 전에 실제 이미지를 3:2로 크롭해서 업로드하려면 handleUpload에서 이 함수를 호출해 File을 교체 */
 async function cropToThreeTwo(file: File): Promise<File> {
   const img = await loadImage(file);
   const sw = img.width, sh = img.height;

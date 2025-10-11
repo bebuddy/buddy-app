@@ -1,7 +1,7 @@
 // 배움 카드
 
 "use client";
-import type { FeedItem } from "@/types";
+import type { FeedItem } from "@/types/postType";
 
 export default function PostCard({
   item,

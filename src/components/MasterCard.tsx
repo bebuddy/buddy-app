@@ -1,7 +1,7 @@
 // 고수 카드
 
 "use client";
-import { ArticleRandomRes } from "@/types";
+import type { ArticleRandomRes } from "@/types/postType";
 
 
 export default function MasterCard({

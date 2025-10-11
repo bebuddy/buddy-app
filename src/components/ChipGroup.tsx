@@ -1,18 +1,13 @@
+// src/components/ChipGroup.tsx
 "use client";
 import React from "react";
 
-/**
- * 제네릭 ChipGroup
- * - multiple: 다중 선택
- * - brand: 선택 칩 배경/테두리 색상
- * - disabledOptions: 전달된 옵션은 비활성화(클릭 불가)
- */
 export default function ChipGroup<T extends string>({
   options,
   value,
   onChange,
   multiple = false,
-  brand = "#33AF83",
+  brand = "#6163FF",
   disabledOptions = [],
 }: {
   options: T[];
@@ -20,15 +15,15 @@ export default function ChipGroup<T extends string>({
   onChange: (next: T[] | T | null) => void;
   multiple?: boolean;
   brand?: string;
-  disabledOptions?: T[]; // 🔹 추가
+  disabledOptions?: T[];
 }) {
-  // 현재 선택값을 Set으로 관리(토글 계산 편의)
-  const selectedSet = new Set(
-    (multiple ? (value as T[] | null) : (value ? [value as T] : [])) || []
-  );
+  // ⚙️ 경고 제거: 중간 변수로 분리
+  const initialSelected: T[] =
+    (multiple ? ((value as T[] | null) ?? []) : value ? [value as T] : []) as T[];
+
+  const selectedSet = new Set<T>(initialSelected);
 
   function toggle(opt: T) {
-    // 비활성화된 칩은 클릭 무시
     if (disabledOptions.includes(opt)) return;
 
     if (multiple) {
