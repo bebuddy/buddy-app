@@ -1,4 +1,4 @@
-// src/app/expert/register/page.tsx
+// src/app/(main)/expert/register/page.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -9,6 +9,13 @@ import LabeledTextarea from "@/components/LabeledTextarea";
 import ChipGroup from "@/components/ChipGroup";
 import PriceInput from "@/components/PriceInput";
 import PhotoUpload from "@/components/PhotoUpload";
+import { useRouter } from "next/navigation";
+
+import { createJuniorPostAction } from "@/actions/post";
+import {
+  ClassKey, ClassType, GenderKey, GenderType, LevelType,
+  TimeKey, TimeType, TimeValue
+} from "@/types/postType";
 
 const LEVELS = ["고수", "초고수", "신"] as const;
 const GENDER_PREF = ["여자 후배님", "남자 후배님", "상관없음"] as const;
@@ -17,20 +24,26 @@ const MENTOR_TYPES = [
   "협력적인","피드백에 유연한","신뢰할 수 있는","적극적인","밝고 유쾌한","실행력 있는",
   "꾸준한","수용적인","공감능력","열려있는","밝은",
 ] as const;
+const ORANGE = "#FF883F";
+
+const DAY_AGREE  = "요일 협의";
+const TIME_AGREE = "시간대 협의";
 
 const MEET_PREF = ["대면이 좋아요","비대면이 좋아요","상관없어요"] as const;
-const DAYS = ["월","화","수","목","금","토","일"] as const;
+const DAYS = ["월","화","수","목","금","토","일","요일 협의"] as const;
 const TIMES = [
   "아침 (06:00 ~ 10:00)",
   "오전 (10:00 ~ 12:00)",
   "오후 (12:00 ~ 18:00)",
   "저녁 (18:00 ~ 22:00)",
   "야간 (22:00 이후)",
+  "시간대 협의"
 ] as const;
 
 type Unit = "시간" | "건당";
 
 export default function ExpertRegisterPage() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
 
@@ -44,6 +57,7 @@ export default function ExpertRegisterPage() {
   const [price, setPrice] = useState("");
   const [unit, setUnit] = useState<Unit | null>(null);
   const [negotiable, setNegotiable] = useState(false);
+  const [fileKeys, setFileKeys] = useState<string[]>([]);
 
   const isValid = useMemo(() => {
     const hasTitle = title.trim().length > 0;
@@ -54,15 +68,74 @@ export default function ExpertRegisterPage() {
     return hasTitle && hasDesc && hasLevel && hasMeet && hasPrice;
   }, [title, desc, level, meetPref, price, negotiable]);
 
-  function handleSubmit() {
-    if (!isValid) return;
-    alert(`등록 완료! (데모)
-단가: ${price ? `${price}원` : "미입력"}${unit ? ` / ${unit}` : ""}`);
+
+  // ✅ 협의 선택 로직
+  function handleDaysChange(next: string[]) {
+    if (next.includes(DAY_AGREE)) {
+      setDays([DAY_AGREE]);
+    } else {
+      setDays(next.filter(d => d !== DAY_AGREE) as (typeof DAYS)[number][]);
+    }
   }
+  function handleTimesChange(next: string[]) {
+    if (next.includes(TIME_AGREE)) {
+      setTimes([TIME_AGREE]);
+    } else {
+      setTimes(next.filter(t => t !== TIME_AGREE) as (typeof TIMES)[number][]);
+    }
+  }
+
+  async function handleSubmit() {
+    if (!isValid) return;
+  
+    // 1) 상세 페이지가 기대하는 모양으로 프리뷰 데이터 만들기
+    const preview = {
+      id: "preview",
+      title,
+      category: null as string | null,
+      createdAt: Date.now(),
+      imageUrls: fileKeys.map(k => `/api/files/${k}`), // presigned redirect 라우트 사용
+      priceKRW: negotiable ? 0 : Number(price || 0),
+      unit: negotiable ? null : (unit || "시간"),
+      timeNote: times.includes("시간대 협의") ? "시간대 협의" : times.join(", "),
+      paragraphs: [desc],
+      mentorTypes,
+      meetPref,
+      author: { name: "익명", age: "-", gender: "-" },
+    };
+  
+    // 2) 로컬 저장 + 프리뷰 상세로 이동 (백엔드 없어도 즉시 화면 확인)
+    try {
+      localStorage.setItem("postPreview", JSON.stringify(preview));
+    } catch {}
+    router.push("/expert/post/preview");
+  
+    // 3) (선택) 백엔드 호출은 비동기로 시도 — 화면 전환과 무관
+    void (async () => {
+      // 여긴 민성이가 만든 createJuniorPostAction 그대로 써도 되고, 나중에 연결
+      // await createJuniorPostAction(req, mockUserId);
+    })();
+  }
+
+  // ✅ 비활성 칩 계산
+  const dayDisabled = useMemo(
+    () => days.includes(DAY_AGREE)
+      ? (DAYS as readonly string[]).filter(d => d !== DAY_AGREE)
+      : [],
+    [days]
+  );
+  const timeDisabled = useMemo(
+    () => times.includes(TIME_AGREE)
+      ? (TIMES as readonly string[]).filter(t => t !== TIME_AGREE)
+      : [],
+    [times]
+  );
 
   return (
     <div className="px-4" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
-      <RegisterActionBar isValid={isValid} onSubmit={handleSubmit} />
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70">
+        <RegisterActionBar isValid={isValid} onSubmit={handleSubmit} brand={ORANGE} />
+      </div>
 
       {/* 주제(접이식) */}
       <Disclosure title="가르치고 싶은 주제를 선택해주세요.">
@@ -103,6 +176,7 @@ export default function ExpertRegisterPage() {
           value={level}
           onChange={(v) => setLevel(v as typeof level)}
           multiple={false}
+          brand={ORANGE}
         />
       </div>
 
@@ -116,19 +190,21 @@ export default function ExpertRegisterPage() {
           value={gender}
           onChange={(v) => setGender(v as typeof gender)}
           multiple={false}
+          brand={ORANGE}
         />
       </div>
 
       {/* 원하는 후배(다중) */}
       <div className="flex flex-col gap-3 mt-7">
         <div className="text-[18px] font-extrabold text-neutral-900">
-          어떤 선배님을 만나고 싶으신가요?
+          어떤 후배님을 만나고 싶으신가요?
         </div>
         <ChipGroup
           options={MENTOR_TYPES as unknown as string[]}
           value={mentorTypes}
           onChange={(v) => setMentorTypes(v as typeof mentorTypes)}
           multiple
+          brand={ORANGE}
         />
       </div>
 
@@ -142,25 +218,30 @@ export default function ExpertRegisterPage() {
           value={meetPref}
           onChange={(v) => setMeetPref(v as typeof meetPref)}
           multiple={false}
+          brand={ORANGE}
         />
       </div>
 
-      {/* 가능 요일/시간 (다중) */}
+      {/* 가능한 요일/시간대 */}
       <div className="flex flex-col gap-3 mt-7">
-        <div className="text-[18px] font-extrabold text-neutral-900">
-          가능한 요일 · 시간대를 알려주세요.
-        </div>
+        <div className="text-[18px] font-extrabold text-neutral-900">가능한 요일 · 시간대를 알려주세요.</div>
+
         <ChipGroup
           options={DAYS as unknown as string[]}
           value={days}
-          onChange={(v) => setDays(v as typeof days)}
+          onChange={(v) => handleDaysChange(v as typeof days)}
           multiple
+          brand={ORANGE}
+          disabledOptions={dayDisabled}
         />
+
         <ChipGroup
           options={TIMES as unknown as string[]}
           value={times}
-          onChange={(v) => setTimes(v as typeof times)}
+          onChange={(v) => handleTimesChange(v as typeof times)}
           multiple
+          brand={ORANGE}
+          disabledOptions={timeDisabled}
         />
       </div>
 
@@ -169,19 +250,30 @@ export default function ExpertRegisterPage() {
         <div className="text-[18px] font-extrabold text-neutral-900">
           과외비 하한을 입력해주세요.
         </div>
+
         <PriceInput
           value={price}
           onChange={setPrice}
           unit={unit}
           onUnitChange={setUnit}
           negotiable={negotiable}
-          onToggleNegotiable={() => setNegotiable(v => !v)}
+          onToggleNegotiable={() =>
+            setNegotiable((prev) => {
+              const next = !prev;
+              if (next) {        // ✅ 협의해요 ON 시 값/단가 리셋
+                setPrice("");
+                setUnit(null);
+              }
+              return next;
+            })
+          }
+          brand={ORANGE}       // 색상 통일
         />
       </div>
 
       {/* 사진 등록 */}
       <div className="mt-7">
-        <PhotoUpload />
+      <PhotoUpload brand={ORANGE} onChange={setFileKeys} />
       </div>
 
       {/* 하단 빈칸 최소화 */}
