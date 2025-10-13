@@ -11,7 +11,7 @@ export default function PriceInput({
   onUnitChange,
   negotiable,
   onToggleNegotiable,
-  brand = "#33AF83",               // ✅ 추가
+  brand = "#33AF83",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -19,9 +19,10 @@ export default function PriceInput({
   onUnitChange: (u: Unit | null) => void;
   negotiable: boolean;
   onToggleNegotiable: () => void;
-  brand?: string;                  // ✅ 추가
+  brand?: string;
 }) {
   const checkboxId = useId();
+  const disabled = negotiable;
 
   function handleChange(v: string) {
     const digits = v.replace(/[^\d]/g, "");
@@ -34,15 +35,21 @@ export default function PriceInput({
       <div className="flex gap-2">
         {UNITS.map((u) => {
           const selected = unit === u;
+          const active = selected && !disabled;
           return (
             <button
               key={u}
-              onClick={() => onUnitChange(selected ? null : u)}
-              className="px-4 py-2 rounded-full text-[16px] font-semibold border transition-colors"
+              type="button"
+              onClick={() => !disabled && onUnitChange(selected ? null : u)}
+              disabled={disabled}
+              aria-disabled={disabled}
+              className={`px-4 py-2 rounded-full text-[16px] font-semibold border transition-opacity ${
+                disabled ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
+              }`}
               style={{
-                backgroundColor: selected ? brand : "transparent",
-                color: selected ? "#fff" : "#111827",
-                borderColor: selected ? brand : "#CBD5E1",
+                backgroundColor: active ? brand : "transparent",
+                color: active ? "#fff" : "#111827",
+                borderColor: active ? brand : "#CBD5E1",
               }}
             >
               {u}
@@ -58,7 +65,10 @@ export default function PriceInput({
           pattern="[0-9]*"
           value={value}
           onChange={(e) => handleChange(e.target.value)}
-          className="w-full rounded-lg border border-neutral-300 px-4 pr-12 py-3.5 text-[17px] outline-none focus:border-neutral-400 bg-white"
+          disabled={disabled}
+          className={`w-full rounded-lg border border-neutral-300 px-4 pr-12 py-3.5 text-[17px] outline-none focus:border-neutral-400 ${
+            disabled ? "bg-neutral-100 cursor-not-allowed opacity-60" : "bg-white"
+          }`}
         />
         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[16px] text-neutral-700">
           원
