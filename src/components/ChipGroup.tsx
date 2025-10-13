@@ -50,7 +50,7 @@ export default function ChipGroup<T extends string>({
             aria-disabled={disabled}
             disabled={disabled}
             className={[
-              "px-3 py-1.5 rounded-full text-[16px] font-semibold border transition-colors",
+              "px-3 py-1.5 rounded-full text-[18px] font-semibold border transition-colors",
               disabled ? "opacity-40 pointer-events-none" : "",
             ].join(" ")}
             style={{

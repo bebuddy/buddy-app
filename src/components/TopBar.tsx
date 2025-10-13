@@ -6,23 +6,27 @@ import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useEffect } from "react";
 import { useSelectedDong } from "@/lib/locationStore";
-import { getCurrentDong } from "@/lib/location";
 
 export default function TopBar() {
   const router = useRouter();
   const { dong, setDong } = useSelectedDong();
 
-  // 처음 로드 시 현재 위치로 기본 행정동 설정
+  // 최초 마운트 시, sign-up에서 저장한 로컬 스토리지 값으로 기본 동 세팅
+  // localStorage: ob.basic = { dong, age, gender, name, role, ... }
   useEffect(() => {
     if (dong) return;
-    (async () => {
-      try {
-        const d = await getCurrentDong();
-        if (d) setDong(d);
-      } catch {
-        // 실패 시 무시 (사용자가 직접 선택 가능)
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = localStorage.getItem("ob.basic");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.dong && typeof parsed.dong === "string") {
+        setDong(parsed.dong);
       }
-    })();
+    } catch {
+      // 파싱 실패하면 무시
+    }
   }, [dong, setDong]);
 
   return (
@@ -39,7 +43,7 @@ export default function TopBar() {
         <div className="px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-3 flex items-center justify-between">
           <Image src="/logo.svg" alt="벗 로고" width={36} height={36} priority />
 
-          {/* 가운데: 동 토글 버튼 */}
+          {/* 가운데: 동 토글 버튼 (누르면 동 검색 화면으로 라우팅) */}
           <button
             type="button"
             onClick={() => router.push("/location")}
@@ -47,7 +51,7 @@ export default function TopBar() {
             aria-label="행정동 선택"
           >
             <span className="text-lg font-extrabold text-neutral-800">
-              {dong ?? "현재 위치"}
+              {dong ?? "행정동 선택"}
             </span>
             <ChevronDown className="w-4 h-4 text-neutral-700" />
           </button>
