@@ -13,7 +13,7 @@ export default function InterestToggle({
 }) {
   return (
     <button
-      className="text-[18px] font-semibold text-black"
+      className="font-medium-18 text-black"
       onClick={() => onChange(!value)}
     >
       관심 분야{" "}

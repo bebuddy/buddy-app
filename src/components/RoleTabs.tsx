@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 type Props = {
-  labels?: { junior?: string; senior?: string }; // ✅ 선택적 라벨
+  labels?: { junior?: string; senior?: string };
 };
 
 export default function RoleTabs({ labels }: Props) {
@@ -18,14 +18,14 @@ export default function RoleTabs({ labels }: Props) {
   );
 
   const base =
-    "relative inline-flex items-end text-[18px] font-semibold pb-1 transition-colors duration-150";
+    "relative inline-flex items-end pb-1 transition-colors duration-150";
   // after 콘텐츠 반드시 지정
   const activeClasses =
-    "text-neutral-900 after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px] after:bg-neutral-900 after:rounded-full";
-  const inactiveClasses = "text-neutral-400";
+    "font-bold-18 text-neutral-900 after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px] after:bg-neutral-900 after:rounded-full";
+  const inactiveClasses = "text-neutral-400 font-bold-18";
 
   return (
-    <div className="flex gap-8">
+    <div className="flex gap-4">
       <button
         aria-current={active === "junior" ? "page" : undefined}
         className={`${base} ${active === "junior" ? activeClasses : inactiveClasses}`}

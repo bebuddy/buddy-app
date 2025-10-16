@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+/* ======================================
+   1️⃣ Base Styles (폰트, 기본 세팅)
+====================================== */
+@layer base {
+  html {
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 18px;
+  }
+
+  @media (min-width: 480px) {
+    html { font-size: 19px; }
+  }
+
+  @media (min-width: 640px) {
+    html { font-size: 20px; }
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+}
+
+/* ======================================
+   2️⃣ Component Layer
+====================================== */
+@layer components {
+  .card {
+    @apply rounded-2xl border border-neutral-200 bg-white shadow-sm;
+  }
+
+  .pill {
+    @apply px-3 py-1 rounded-full bg-neutral-100 text-[16px];
+  }
+}
+
+/* ======================================
+   3️⃣ Utilities
+====================================== */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ======================================
+   4️⃣ Theme Colors (Tailwind v4 syntax)
+====================================== */
+@theme {
+  /* PRIMARY */
+  --color-primary-100: #ffe7de;
+  --color-primary-200: #ffb69a;
+  --color-primary-300: #ff915c;
+  --color-primary-400: #ff7a05;
+  --color-primary-500: #ff583f;
+
+  /* SECONDARY */
+  --color-secondary-100: #e7e6ff;
+  --color-secondary-200: #ccc5ff;
+  --color-secondary-300: #a0a3ff;
+  --color-secondary-400: #6a63ff;
+  --color-secondary-500: #463eff;
+
+  /* NEUTRAL */
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #e6e6e6;
+  --color-neutral-300: #cccccc;
+  --color-neutral-400: #b3b3b3;
+  --color-neutral-500: #999999;
+  --color-neutral-600: #808080;
+  --color-neutral-700: #777777;
+  --color-neutral-800: #606060;
+  --color-neutral-900: #4a4a4a;
+  --color-neutral-1000: #333333;
+  --color-neutral-10: #39393900; /* transparent gray */
+
+  /* BRAND */
+  --color-brand: #6163ff;
+}
+
+/* ======================================
+   5️⃣ Brand Utilities
+====================================== */
+@utility brand {
+  color: var(--color-brand);
+}
+@utility brand-bg {
+  background-color: var(--color-brand);
+}
+@utility brand-border {
+  border-color: var(--color-brand);
+}
+
+/* ======================================
+   6️⃣ Typography Utilities (단순 규칙형)
+====================================== */
+
+/* 22pt */
+@utility font-regular-22 { font-size: 22pt; font-weight: 400; }
+@utility font-medium-22  { font-size: 22pt; font-weight: 500; line-height: 1.4; }
+@utility font-semibold-22{ font-size: 22pt; font-weight: 600; line-height: 1.4; }
+@utility font-bold-22    { font-size: 22pt; font-weight: 700; line-height: 1.4; }
+
+/* 20pt */
+@utility font-regular-20 { font-size: 20pt; font-weight: 400; }
+@utility font-medium-20  { font-size: 20pt; font-weight: 500; line-height: 1.4; }
+@utility font-semibold-20{ font-size: 20pt; font-weight: 600; line-height: 1.4; }
+@utility font-bold-20    { font-size: 20pt; font-weight: 700; line-height: 1.4; }
+
+/* 18pt */
+@utility font-regular-18 { font-size: 18pt; font-weight: 400; }
+@utility font-medium-18  { font-size: 18pt; font-weight: 500; }
+@utility font-semibold-18{ font-size: 18pt; font-weight: 600; }
+@utility font-bold-18    { font-size: 18pt; font-weight: 700; }
+
+/* 16pt */
+@utility font-regular-16 { font-size: 16pt; font-weight: 400; }
+@utility font-medium-16  { font-size: 16pt; font-weight: 500; }
+@utility font-semibold-16{ font-size: 16pt; font-weight: 600; }
+@utility font-bold-16    { font-size: 16pt; font-weight: 700; }
+
+/* 14pt */
+@utility font-regular-14 { font-size: 14pt; font-weight: 400; }
+@utility font-medium-14  { font-size: 14pt; font-weight: 500; }
+@utility font-semibold-14{ font-size: 14pt; font-weight: 600; }
+@utility font-bold-14    { font-size: 14pt; font-weight: 700; }

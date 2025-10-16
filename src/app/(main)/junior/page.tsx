@@ -42,17 +42,16 @@ export default function Page() {
   return (
     <div className="relative px-4 pb-28 min-h-screen">
       <TopBar />
-      <div className="flex items-center justify-between mt-3">
-        {/* ✅ 기존 후배/선배 버튼 묶음 → RoleTabs로 교체 */}
+      <div className="flex items-center justify-between pt-[22px]">
         <RoleTabs /> 
         <InterestToggle value={interestOn} onChange={setInterestOn} brand={BRAND} />
       </div>
 
       <div className="mt-3 flex items-center gap-2">
-        <span className="text-xl font-bold">선배님을 찾고 있어요 📚</span>
+        <span className="font-medium-18">선배님을 찾고 있어요 📚</span>
       </div>
 
-      <div className="mt-3 flex flex-col gap-3">
+      <div className="mt-4 flex flex-col gap-3">
         {/* 로딩 스피너 */}
         {isLoading &&
           <LoadingSpinner height={400} />

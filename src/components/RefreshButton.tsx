@@ -1,5 +1,5 @@
 "use client";
-import { RefreshCcw } from "lucide-react";
+import RefreshIcon from '@/assets/icon/RefreshIcon.svg'
 
 type Props = {
   onClick: () => void;
@@ -10,8 +10,8 @@ type Props = {
 export default function RefreshButton({ onClick, size = "md", className = "" }: Props) {
   const sizeClasses =
     size === "sm"
-      ? "text-[14px] px-3 py-1.5 gap-1"
-      : "text-[16px] px-4 py-2 gap-2";
+      ? "font-medium-18 px-4 py-1.5 gap-1"
+      : "font-medium-18 px-4 py-2 gap-2";
 
   const iconSize = size === "sm" ? 16 : 18;
 
@@ -23,7 +23,7 @@ export default function RefreshButton({ onClick, size = "md", className = "" }: 
       type="button"
     >
       <span>새로고침</span>
-      <RefreshCcw width={iconSize} height={iconSize} className="text-white" />
+      <RefreshIcon width={iconSize} height={iconSize} className="text-white" />
     </button>
   );
 }
