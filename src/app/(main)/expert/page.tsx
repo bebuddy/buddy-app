@@ -74,16 +74,18 @@ export default function ExpertPage() {
 
       {/* 새로고침 버튼 (컴포넌트 사용 / 컴팩트) */}
       <div className="mt-4 mb-8 w-fit z-[100]">
-        <RefreshButton onClick={refreshItemList}/>
+        <RefreshButton onClick={refreshItemList} />
       </div>
 
       {/* 등록하기 버튼 - floating */}
       <div
-        className="fixed right-0"
+        className="fixed left-0 right-0 pointer-events-none"
         style={{ bottom: "calc(env(safe-area-inset-bottom) + 130px)" }}
       >
         <div className="mx-auto max-w-[768px] px-4 flex justify-end">
-          <WriteButton onClick={() => router.push("/expert/register")} name={"등록하기"} bgColor={"primary"} />
+          <div className="pointer-events-auto">
+            <WriteButton onClick={() => router.push("/expert/register")} name={"등록하기"} bgColor={"primary"} />
+          </div>
         </div>
       </div>
       <BottomNav />
