@@ -5,11 +5,11 @@
 export default function InterestToggle({
   value,
   onChange,
-  brand = "#6163FF",
+  color = "primary",
 }: {
   value: boolean;
   onChange: (v: boolean) => void;
-  brand?: string;
+  color?: "primary" | "secondary";
 }) {
   return (
     <button
@@ -17,7 +17,7 @@ export default function InterestToggle({
       onClick={() => onChange(!value)}
     >
       관심 분야{" "}
-      <span style={{ color: brand }}>
+      <span className={`${color==="primary"?'text-primary-500':'text-secondary-500'} hover:opacity-80`}>
         {value ? "ON" : "OFF"}
       </span>
     </button>

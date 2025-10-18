@@ -65,7 +65,7 @@ export default function OnboardingJuniorPage() {
   if (phase === "ask") {
     return (
       <div className="w-full flex justify-center">
-        <div className="w-full max-w-[440px] min-h-screen bg-white px-5 pb-28">
+        <div className="w-full max-w-[768px] min-h-screen bg-white px-5 pb-28">
           <OnboardingTopbar flow="onboarding" showSkip onSkip={skipAll} barColor={BRAND} bottomGap={8}/>
           <div className="mt-4">
             <h1 className="text-[22px] font-extrabold">선배님을 찾고 계신가요?</h1>
@@ -161,7 +161,7 @@ export default function OnboardingJuniorPage() {
 
   return (
     <div className="w-full flex justify-center">
-      <div className="w-full max-w-[440px] min-h-screen bg-white px-5 pb-28">
+      <div className="w-full max-w-[768px] min-h-screen bg-white px-5 pb-28">
         <OnboardingTopbar
           flow="onboarding"
           progress={progress}
@@ -170,7 +170,6 @@ export default function OnboardingJuniorPage() {
           barColor={BRAND}        // 보라 진행바
           bottomGap={8}
         />
-
         {/* Topbar와 본문 간격 (전문가 페이지와 동일) */}
         <div className="mt-4 pb-28">
         {step === 0 && (

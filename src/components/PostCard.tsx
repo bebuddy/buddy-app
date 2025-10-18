@@ -2,20 +2,23 @@
 
 "use client";
 
-import { FeedItem } from "@/types/postType";
+import { Item } from "@/app/(main)/junior/page";
+import Image from "next/image"
+import { useRouter } from "next/navigation";
 
 export default function PostCard({
   item,
   brand = "#6163FF",
 }: {
-  item: FeedItem;
+  item: Item;
   brand?: string;
 }) {
+  const router = useRouter();
   return (
     <div
       className="card p-4"
       role="button"
-      onClick={() => alert(`카드 클릭: ${item.title}`)}
+      onClick={() => router.push(`/junior/post/${item.id}`)}
     >
       {/* 상단: 카테고리 칩(보라색 테두리) / 지역 버튼 */}
       <div className="flex items-center justify-between">
@@ -27,12 +30,8 @@ export default function PostCard({
         </span>
 
         <button
-          className="text-[16px] flex items-center gap-1"
+          className="font-regular-16 flex items-center gap-1"
           style={{ color: "#6b7280" }} // neutral-500
-          onClick={(e) => {
-            e.stopPropagation();
-            alert("지역 토글 클릭 (대현동)");
-          }}
         >
           <span>▼</span>
           <span>{item.location}</span>
@@ -48,18 +47,24 @@ export default function PostCard({
         >
           Q
         </span>
-        <h3 className="text-2xl font-extrabold leading-7">{item.title}</h3>
+        <h3 className="font-medium-20">{item.title}</h3>
       </div>
 
       {/* 본문 */}
-      <p className="mt-2 text-[18px] text-neutral-700">
-        {item.content && item.content.length > 60 ? item.content.slice(0, 60) + "..." : item.content}
+      <p className="flex mt-2 font-regular-16 gap-[6px]">
+        <p className="font-regular-16 line-clamp-3 flex-1 text-ellipsis overflow-hidden">
+          {item.content}
+        </p>        {/* 이미지 자리 */}
+        {item.imageUrlM && item.imageUrlM?.length !== 0 && (
+          <div className="flex shrink-0 relative mt-2 w-[100px] h-[80px] rounded-md bg-neutral-300 overflow-hidden" aria-hidden >
+            <Image
+              src={item.imageUrlM}
+              alt="이미지"
+              fill
+            />
+          </div>
+        )}
       </p>
-
-      {/* 이미지 자리 */}
-      {item.hasImage && (
-        <div className="mt-3 w-20 h-20 rounded-md bg-neutral-300" aria-hidden />
-      )}
 
       <div className="mt-2 text-[16px] text-neutral-500">1일 전</div>
     </div>

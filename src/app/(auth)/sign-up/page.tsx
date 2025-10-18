@@ -1,4 +1,3 @@
-// app/(auth)/sign-up/page.tsx
 "use client";
 
 import React from "react";
@@ -10,6 +9,8 @@ import OnboardingTopbar from "@/components/OnboardingTopbar";
 const BRAND = "#6163FF";
 const BRAND_MENTOR = "#FF883F";
 const Role = ["후배(멘티)", "선배(멘토)"] as const;
+
+
 
 /** TODO: 읍/면/동 데이터 연동 전 임시 유효성 체크
  *  - 실제론 API로 존재 여부 확인 → true/false 반환
@@ -31,7 +32,14 @@ function sanitizeNickname(raw: string) {
 
 export default function SignUpPage() {
   const router = useRouter();
-
+  // URL에서 userId 파싱 (SSR 안전)
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setUserId(params.get("userId"));
+    }
+  }, []);
   // 0~4 (총 5단계)
   const [step, setStep] = useState(0);
 
@@ -116,7 +124,7 @@ export default function SignUpPage() {
       localStorage.setItem("ob.basic", JSON.stringify(basic));
       // TODO: 파일 업로드는 S3 등 업로드 → 받은 URL을 함께 저장
       if (photo) localStorage.setItem("ob.photoName", photo.name);
-    } catch {}
+    } catch { }
 
     // role 분기
     if (role === "후배(멘티)") router.push("/onboarding/junior");
@@ -158,7 +166,7 @@ export default function SignUpPage() {
 
   return (
     <div className="w-full flex justify-center">
-      <div className="w-full max-w-[440px] min-h-screen bg-white px-5 pb-28">
+      <div className="w-full max-w-[768px] min-h-screen bg-white px-5 pb-28">
         {/* 헤더 (progress는 0~0.8까지 표시, 완료 시 다음 페이지에서 1.0) */}
         <OnboardingTopbar flow="signup" progress={progress} showSkip={false} bottomGap={8} />
 
@@ -175,13 +183,10 @@ export default function SignUpPage() {
                   placeholder="읍/면/동으로 입력"
                   className="w-full h-12 rounded-lg border px-3 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                   inputMode="search"
-                  // 숫자/영문/특수문자 입력 자체를 막지는 않지만 onChange에서 필터링
+                // 숫자/영문/특수문자 입력 자체를 막지는 않지만 onChange에서 필터링
                 />
                 <CheckDot show={dongOk} />
               </div>
-              <p className="text-xs text-neutral-500">
-                한글만 입력 가능해요. (예: 신촌동)
-              </p>
             </>
           )}
 

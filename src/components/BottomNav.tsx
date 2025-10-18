@@ -16,11 +16,11 @@ export default function BottomNav() {
   return (
     // 바깥: 위치 고정 + 기기폭 컨테이너
     <nav
-      className="fixed z-50 left-1/2 -translate-x-1/2 w-full max-w-[440px] pointer-events-none"
-      style={{ bottom: "env(safe-area-inset-bottom)" }}
+      className="bg-white fixed z-[1900] left-1/2 -translate-x-1/2 w-full max-w-[768px] pointer-events-none py-4"
+      style={{ bottom: "env(safe-area-inset-bottom)", boxShadow: '0px -2px 19px rgba(0,0,0,0.04)' }}
     >
       {/* 안쪽: 실제 바 */}
-      <div className="pointer-events-auto h-[64px] bg-white border-t border-neutral-200 flex items-center justify-around">
+      <div className="pointer-events-auto h-[64px] bg-white flex items-center justify-around">
         {/* 추천 탭 */}
         <button
           className={`flex flex-col items-center gap-1 ${
@@ -31,10 +31,10 @@ export default function BottomNav() {
         >
           <div
             className={`w-3 h-3 rounded-full ${
-              active === "recommend" ? "bg-neutral-800" : "bg-neutral-300"
+              active === "recommend" ? "bg-black" : "bg-neutral-300"
             }`}
           />
-          <span className="text-[18px]">추천</span>
+          <span className="font-medium-20">추천</span>
         </button>
 
         {/* 대화 탭 */}
@@ -47,10 +47,10 @@ export default function BottomNav() {
         >
           <div
             className={`w-3 h-3 rounded-full ${
-              active === "chat" ? "bg-neutral-800" : "bg-neutral-300"
+              active === "chat" ? "bg-black" : "bg-neutral-300"
             }`}
           />
-          <span className="text-[18px]">대화</span>
+          <span className="font-medium-20">대화</span>
         </button>
       </div>
     </nav>

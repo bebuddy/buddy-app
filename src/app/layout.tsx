@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" className={notoSans.className}>
       <body className="min-h-dvh bg-neutral-50 text-neutral-900 antialiased">
-        <div className="mx-auto min-h-dvh flex flex-col w-full max-w-[440px] bg-white">
+        <div className="mx-auto min-h-dvh flex flex-col w-full max-w-[768px] bg-white">
           <main className="flex-1">{children}</main>
         </div>
       </body>

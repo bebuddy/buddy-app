@@ -55,14 +55,14 @@
   --color-primary-200: #ffb69a;
   --color-primary-300: #ff915c;
   --color-primary-400: #ff7a05;
-  --color-primary-500: #ff583f;
+  --color-primary-500: #FF883F;
 
   /* SECONDARY */
   --color-secondary-100: #e7e6ff;
   --color-secondary-200: #ccc5ff;
   --color-secondary-300: #a0a3ff;
   --color-secondary-400: #6a63ff;
-  --color-secondary-500: #463eff;
+  --color-secondary-500: #6163FF;
 
   /* NEUTRAL */
   --color-neutral-100: #ffffff;
@@ -97,6 +97,12 @@
 /* ======================================
    6️⃣ Typography Utilities (단순 규칙형)
 ====================================== */
+
+/* 24pt */
+@utility font-regular-24 { font-size: 24pt; font-weight: 400; }
+@utility font-medium-24  { font-size: 24pt; font-weight: 500; line-height: 1.4; }
+@utility font-semibold-24{ font-size: 24pt; font-weight: 600; line-height: 1.4; }
+@utility font-bold-24    { font-size: 24pt; font-weight: 700; line-height: 1.4; }
 
 /* 22pt */
 @utility font-regular-22 { font-size: 22pt; font-weight: 400; }

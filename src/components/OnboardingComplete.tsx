@@ -24,7 +24,7 @@ export default function OnboardingComplete() {
 
       {/* ✅ 시작 버튼 컨테이너를 다른 Nav 컴포넌트와 동일한 방식으로 중앙 정렬합니다. */}
       <div 
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] p-4"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] p-4"
         style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
       >
          <button

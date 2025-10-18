@@ -40,7 +40,7 @@ export default function TopBar() {
 
       {/* 상단 고정 헤더 (경계선 없음) */}
       <div
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] z-[100] bg-white"
+        className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] z-[100] bg-white"
         style={{
           boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.06)",
         }}
@@ -57,8 +57,8 @@ export default function TopBar() {
           {/* 가운데: 동 토글 버튼 (누르면 동 검색 화면으로 라우팅) */}
           <button
             type="button"
-            onClick={() => router.push("/location")}
-            className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1"
+            onClick={() => console.log("준비중")}
+            className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 cursor-pointer hover:opacity-80"
             aria-label="행정동 선택"
           >
             <span className="text-lg font-extrabold text-neutral-800">
@@ -71,7 +71,7 @@ export default function TopBar() {
           <button
             aria-label="내 정보"
             className="w-8 h-8 rounded-full bg-neutral-300"
-            onClick={() => alert("내 정보로 이동")}
+            onClick={() => router.push('/myPage')}
           />
         </div>
       </div>
