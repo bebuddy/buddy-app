@@ -2,81 +2,87 @@
 
 "use client";
 
-import { ArticleRandomRes } from "@/types/postType";
+import { PostType } from "@/assets/mockdata/postSenior";
+import { useRouter } from "next/navigation";
+import { Chip } from "./common/Chip";
 
 
 export default function MasterCard({
   item,
   brand = "#6163FF",
 }: {
-  item: ArticleRandomRes;
+  item: PostType;
   brand?: string;
 }) {
+  const router = useRouter();
   const overlay =
-    "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.15) 35%, rgba(255,255,255,0.85) 75%, rgba(255,255,255,1) 100%)";
-  const bg = item.imageUrlL
-    ? `${overlay}, url(${item.imageUrlL})`
+    "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.15) 35%, rgba(255,255,255,0.90) 65%, rgba(255,255,255,1) 100%)";
+  const bg = item.image_url_l
+    ? `${overlay}, url(${item.image_url_l})`
     : `${overlay}, linear-gradient(180deg,#cfcfcf,#9e9e9e)`;
 
-  const ageLabel = getKDecadeLabel(item.birth_date); // "50대 중반" 같은 라벨
-
-  console.log(item.birth_date)
+  const ageLabel = getKDecadeLabel(String(item.user.age));
 
   return (
     <div
       className="rounded-2xl border border-neutral-200 shadow-sm overflow-hidden bg-white"
-      onClick={() => alert(`카드 클릭: ${item.title}`)}
+      onClick={() => router.push(`/expert/post/${item.id}`)}
       role="button"
     >
       {/* 이미지 영역 */}
       <div
-        className="h-40 bg-center bg-cover"
+        className="relative h-[360px] bg-center bg-cover"
         style={{ backgroundImage: bg }}
         aria-hidden
       >
         {/* 위치 칩 */}
         <div className="p-3 flex justify-end">
-          <div className="px-3 py-1 rounded-full text-[16px] bg-white/90 text-neutral-700 shadow">
-            ▼ {item.location}
+          <div className="px-3 py-1 rounded-full font-regular-16 bg-white/90 text-neutral-900 shadow">
+            ▼ {item?.user.location}
+          </div>
+        </div>
+        {/* 본문 */}
+        <div className="absolute bottom-16 left-4">
+          <div className="font-medium-18">
+            {item?.title}
+          </div>
+
+          <div className="font-medium-22">
+            {item.user.name}
+            {ageLabel ? `, ${ageLabel}` : ""}
+          </div>
+
+          {/* 카테고리 칩(보라색 테두리) */}
+          <div className="absolute mt-2">
+            <Chip color="primary">
+              {item.category}
+            </Chip>
           </div>
         </div>
       </div>
-
-      {/* 본문 */}
-      <div className="p-4">
-        <div className="text-[18px] text-neutral-800 leading-6">
-          {item.title}
-        </div>
-
-        <div className="mt-2 text-[20px] font-extrabold">
-          {item.name ? `${item.name}` : "[이름 or 닉네임]"}
-          {ageLabel ? `, ${ageLabel}` : ""}
-        </div>
-
-        {/* 카테고리 칩(보라색 테두리) */}
-        <div className="mt-3">
-          <span
-            className="px-3 py-1 rounded-full text-[16px] bg-white"
-            style={{ border: `1.5px solid ${brand}`, color: brand }}
-          >
-            {item.category}
-          </span>
-        </div>
-      </div>
     </div>
+
+
   );
 }
 
-// 출생연도 → "50대 초반/중반/후반" 라벨
-function getKDecadeLabel(birth?: string) {
-  if (!birth) return "";
-  const y = Number(birth.slice(0, 4));
-  if (!y) return "";
+function getKDecadeLabel(birthOrAge?: string | number) {
+  if (!birthOrAge) return "";
+  const val = Number(birthOrAge);
   const now = new Date();
-  const age = now.getFullYear() - y;
-  // 월/일은 무시(대략치). 필요하면 month/day 비교로 -1 보정 가능.
-  const decade = Math.floor(age / 10) * 10; // 50, 60 ...
-  const mod = age % 10;
+
+  // 1900~2099면 출생연도, 아니면 나이로 인식
+  if (val >= 1900 && val <= now.getFullYear()) {
+    const age = now.getFullYear() - val;
+    const decade = Math.floor(age / 10) * 10;
+    const mod = age % 10;
+    const part = mod <= 3 ? "초반" : mod <= 6 ? "중반" : "후반";
+    return `${decade}대 ${part}`;
+  }
+
+  // 나이 기반 계산
+  const decade = Math.floor(val / 10) * 10;
+  const mod = val % 10;
   const part = mod <= 3 ? "초반" : mod <= 6 ? "중반" : "후반";
   return `${decade}대 ${part}`;
 }

@@ -21,7 +21,7 @@ export default function OnboardingNav({
   const enabledStyle = isNextDisabled ? undefined : { backgroundColor: brandColor };
 
   return (
-    <nav className="fixed bottom-0 z-50 left-1/2 -translate-x-1/2 w-full max-w-[440px]">
+    <nav className="fixed bottom-0 z-50 left-1/2 -translate-x-1/2 w-full max-w-[768px]">
       <div
         className="bg-white flex items-center justify-center gap-3 p-4"
         style={{ paddingBottom: "calc(25px + env(safe-area-inset-bottom))" }}

@@ -63,7 +63,7 @@ export default function OnboardingExpertPage() {
   if (phase === "ask") {
     return (
       <div className="w-full flex justify-center">
-        <div className="w-full max-w-[440px] min-h-screen bg-white px-5 pb-28">
+        <div className="w-full max-w-[768px] min-h-screen bg-white px-5 pb-28">
           <OnboardingTopbar flow="onboarding" showSkip={false} onSkip={skipAll} barColor={ORANGE} bottomGap={8}/>
           <div className="mt-4">
             <h1 className="text-[22px] font-extrabold">후배님을 찾고 계신가요?</h1>
@@ -155,7 +155,7 @@ export default function OnboardingExpertPage() {
 
   return (
     <div className="w-full flex justify-center">
-      <div className="w-full max-w-[440px] min-h-screen bg-white px-5 pb-28">
+      <div className="w-full max-w-[768px] min-h-screen bg-white px-5 pb-28">
         <OnboardingTopbar
           flow="onboarding"
           progress={progress}
@@ -165,7 +165,7 @@ export default function OnboardingExpertPage() {
           bottomGap={8}
         />
 
-        {/* ⬇️ Topbar와 본문 사이 간격 */}
+        {/* Topbar와 본문 사이 간격 */}
         <div className="mt-4 pb-28">
           {step === 0 && (
             <>

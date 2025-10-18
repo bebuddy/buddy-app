@@ -4,15 +4,15 @@ import { useRouter } from "next/navigation";
 export default function RegisterActionBar({
   isValid,
   onSubmit,
-  brand = "#33AF83",                // ✅ 기본값: 녹색
+  brand = "#33AF83",              // 기본값: 녹색
 }: {
   isValid: boolean;
   onSubmit: () => void;
-  brand?: string;                   // ✅ 추가
+  brand?: string;                   // 추가
 }) {
   const router = useRouter();
   return (
-    <div className="pt-4 pb-3 flex items-center justify-between">
+    <div className="px-4 w-full pt-4 pb-3 flex items-center justify-between">
       <button
         aria-label="닫기"
         className="w-10 h-10 flex items-center justify-center"
