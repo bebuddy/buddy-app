@@ -43,11 +43,11 @@ export default function MasterCard({
         </div>
         {/* 본문 */}
         <div className="absolute bottom-16 left-4">
-          <div className="font-medium-18">
+          <div className="font-medium-18 line-clamp-1">
             {item?.title}
           </div>
 
-          <div className="font-medium-22">
+          <div className="font-medium-22 line-clamp-1">
             {item.user.name}
             {ageLabel ? `, ${ageLabel}` : ""}
           </div>
