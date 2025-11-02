@@ -76,7 +76,7 @@ export default function MyPage() {
       {/* 프로필 카드 */}
       <button
         type="button"
-        onClick={() => router.push("/(main)/myPage/profile")} // 프로필 수정 라우팅(임시 경로)
+        onClick={() => router.push("/myPage/profile")} // 프로필 수정 라우팅(임시 경로)
         className="mt-5 w-full flex items-center gap-4"
       >
         <div className="w-16 h-16 rounded-full bg-neutral-200 shrink-0" />
@@ -126,7 +126,7 @@ export default function MyPage() {
 
       {/* 선배 인증 배너 */}
       <Link
-        href="/(main)/myPage/expertCertification"
+        href="/myPage/expertCertification"
         className="mt-6 block"
       >
         <div
@@ -151,7 +151,7 @@ export default function MyPage() {
       </Link>
 
       {/* 알림 박스 */}
-      <Link href="/(main)/myPage/alarm" className="mt-3 block">
+      <Link href="/myPage/alarm" className="mt-3 block">
         <div
           className={[
             "rounded-2xl p-5 bg-white",
