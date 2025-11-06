@@ -1,4 +1,4 @@
-// src/app/chat/page.tsx
+// src/app/(main)/chat/page.tsx
 "use client";
 
 import BottomNav from "@/components/BottomNav";

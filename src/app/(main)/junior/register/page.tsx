@@ -17,6 +17,29 @@ type Unit = "시간" | "건당";
 
 const BRAND = "#6163FF";
 
+const CATEGORY_GROUPS: { title: string; options: string[] }[] = [
+  {
+    title: "취미",
+    options: ["식물", "음식", "목공", "뜨개", "자수", "공예", "인테리어", "기타시공", "타로"],
+  },
+  {
+    title: "창작",
+    options: ["글쓰기", "그림", "사진", "음악"],
+  },
+  {
+    title: "라이프스타일",
+    options: ["건강", "운동", "청소", "루틴 관리", "마음", "수면"],
+  },
+  {
+    title: "커리어",
+    options: ["면접", "포트폴리오", "커리어 설계", "직무 멘토링", "자격증", "스터디"],
+  },
+  {
+    title: "언어",
+    options: ["영어", "일본어", "중국어", "불어", "스페인어"],
+  },
+];
+
 // 옵션들
 const LEVELS = ["입문", "초보", "심화"] as const;
 const MENTOR_GENDER = ["남자 선배님", "여자 선배님", "상관없음"] as const;
@@ -63,6 +86,7 @@ export default function WritePage() {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
 
+  const [category, setCategory] = useState<string | null>(null); // [신규] 카테고리 state
   const [level, setLevel] = useState<(typeof LEVELS)[number] | null>(null);
   const [mentorGender, setMentorGender] = useState<(typeof MENTOR_GENDER)[number] | null>(null);
   const [mentorTypes, setMentorTypes] = useState<(typeof MENTOR_TYPES)[number][]>([]);
@@ -106,10 +130,12 @@ export default function WritePage() {
   const isValid = useMemo(() => {
     const hasTitle = title.trim().length > 0;
     const hasDesc = desc.trim().length > 0;
+    const hasCategory = !!category;
     const hasMeet = !!meetPref;
     const hasPrice = negotiable || (price.trim().length > 0 && /^\d+$/.test(price));
-    return hasTitle && hasDesc && hasMeet && hasPrice;
-  }, [title, desc, meetPref, price, negotiable]);
+  
+    return hasTitle && hasDesc && hasCategory && hasMeet && hasPrice;
+  }, [title, desc, category, meetPref, price, negotiable]);
 
   // 제출: 로컬 프리뷰 저장 후 /junior/post/preview 이동
   async function handleSubmit() {
@@ -155,8 +181,33 @@ export default function WritePage() {
       <div className="px-4" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
 
         {/* 카테고리(접이식) */}
-        <Disclosure title="배우고 싶은 주제를 선택해주세요.">
-          <div className="text-[15px] text-neutral-600">(주제 목록은 추후 연결)</div>
+        <Disclosure
+          title="배우고 싶은 주제를 선택해주세요."
+          summary={
+            category ? (
+              <span
+                className="inline-block px-2 py-0.5 rounded-md text-sm font-semibold"
+                style={{ color: BRAND, backgroundColor: `${BRAND}1A` }} // 1A는 10% 투명도
+              >
+                {category}
+              </span>
+            ) : null
+          }
+        >
+          <div className="flex flex-col gap-5 pt-2">
+            {CATEGORY_GROUPS.map(({ title, options }) => (
+              <section key={title}>
+                <h3 className="text-[16px] font-semibold mb-3 text-neutral-800">{title}</h3>
+                <ChipGroup
+                  options={options}
+                  value={category}
+                  onChange={(v) => setCategory(v as string | null)}
+                  multiple={false}
+                  brand={BRAND}
+                />
+              </section>
+            ))}
+          </div>
         </Disclosure>
 
         <div className="h-5" />
