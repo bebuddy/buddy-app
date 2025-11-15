@@ -5,7 +5,7 @@
 import { PostType } from "@/assets/mockdata/postSenior";
 import { useRouter } from "next/navigation";
 import { Chip } from "./common/Chip";
-
+import SaveButton from "./SaveButton"; // ★ 1. SaveButton 임포트
 
 export default function MasterCard({
   item,
@@ -35,13 +35,18 @@ export default function MasterCard({
         style={{ backgroundImage: bg }}
         aria-hidden
       >
-        {/* 위치 칩 */}
-        <div className="p-3 flex justify-end">
+        {/* ★ 2. 상단 영역 수정 (위치 칩 / 저장 버튼) */}
+        <div className="p-3 flex items-center justify-between">
+          {/* 위치 칩 (왼쪽) */}
           <div className="px-3 py-1 rounded-full font-regular-16 bg-white/90 text-neutral-900 shadow">
             ▼ {item?.user.location}
           </div>
+          
+          {/* 저장 버튼 (오른쪽) */}
+          <SaveButton itemId={item.id} />
         </div>
-        {/* 본문 */}
+        
+        {/* 본문 (기존과 동일) */}
         <div className="absolute bottom-16 left-4">
           <div className="font-medium-18 line-clamp-1">
             {item?.title}
@@ -61,11 +66,10 @@ export default function MasterCard({
         </div>
       </div>
     </div>
-
-
   );
 }
 
+// ★ 3. getKDecadeLabel 함수 (기존과 동일)
 function getKDecadeLabel(birthOrAge?: string | number) {
   if (!birthOrAge) return "";
   const val = Number(birthOrAge);
