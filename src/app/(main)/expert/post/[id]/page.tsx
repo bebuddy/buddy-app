@@ -121,7 +121,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
           {/* 원하는 후배 스타일 */}
           <div className="mt-6">
-            <div className="mt-3 flex flex-col gap-2">
+            <div className="mt-3 flex flex-col gap-3">
               {post.junior_type.map((j, i) => <Chip textSize={18} key={i}>{j}</Chip>)}
             </div>
             <div className="font-medium-20 text-neutral-900 mt-5">후배님을 만나고 싶어요.</div>
@@ -132,7 +132,7 @@ export default function Page({ params }: { params: { id: string } }) {
           {/* 선호하는 수업 방식 */}
           <div className="mt-6">
             <div className="font-medium-20 text-neutral-900">수업은...</div>
-            <div className="mt-3 flex flex-col flex-wrap gap-5">
+            <div className="mt-3 flex flex-col flex-wrap gap-3">
               <div className="flex gap-2">
                 {post.days.map((d, i) => <Chip textSize={18} key={i}>{d}</Chip>)}
               </div>

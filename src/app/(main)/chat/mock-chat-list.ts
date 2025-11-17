@@ -9,7 +9,7 @@ import {
   // Mock 파트너 1 (선배)
   const MOCK_PARTNER_1: SimpleUserDto = {
     uuid: "partner-uuid-456",
-    name: "열정적인 선배",
+    name: "김미르",
     schoolName: "버디대학교",
     createdBy: "system",
     createdDate: "2025-10-01T10:00:00Z",
@@ -22,7 +22,7 @@ import {
   // Mock 파트너 2 (후배)
   const MOCK_PARTNER_2: SimpleUserDto = {
     uuid: "partner-uuid-789",
-    name: "엉뚱한 후배",
+    name: "용용용",
     schoolName: "버디대학교",
     createdBy: "system",
     createdDate: "2025-10-05T14:00:00Z",
@@ -44,7 +44,7 @@ import {
         partner: MOCK_PARTNER_1,
         lastMessage: {
           uuid: "msg-5",
-          message: "앗 맞아요. 정확히는 투영 변환 쪽이 헷갈립니다.",
+          message: "아 저는 AI 이미지 생성에 관심이 많습니다!",
           sender: { uuid: "my-uuid-123" } as SimpleUserDto, // '나'의 정보 (간략화)
           receiver: MOCK_PARTNER_1,
           createdDate: "2025-11-15T13:34:00Z",
@@ -79,7 +79,7 @@ import {
         partner: MOCK_PARTNER_2,
         lastMessage: {
           uuid: "msg-b-1",
-          message: "선배님! 혹시 시간 되실 때 커피 한잔하실 수 있나요?",
+          message: "저는 화목이 편합니다.",
           sender: MOCK_PARTNER_2, 
           receiver: { uuid: "my-uuid-123" } as SimpleUserDto,
           createdDate: "2025-11-14T18:00:00Z",

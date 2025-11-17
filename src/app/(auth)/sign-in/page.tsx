@@ -24,9 +24,16 @@ export default function SigninPage() {
                 </div>
             </div>
             <div
-                style={{ bottom: 'calc(env(safe-area-inset-bottom) + 32px)' }}
-                className="fixed left-7 right-7">
-                <FillButton name="시작하기" onClick={()=> router.push('/verify')}/>
+                // 1. OnboardingNav의 <nav> 스타일: 위치 고정 및 중앙 정렬
+                className="fixed bottom-0 z-50 left-1/2 -translate-x-1/2 w-full max-w-[768px]"
+            >
+                {/* 2. OnboardingNav의 내부 <div> 스타일: 패딩 및 safe-area 적용 */}
+                <div
+                    className="p-4" // 좌우 여백 (16px)
+                    style={{ paddingBottom: "calc(25px + env(safe-area-inset-bottom))" }} // OnboardingNav와 동일한 하단 패딩
+                >
+                    <FillButton name="시작하기" onClick={()=> router.push('/verify')}/>
+                </div>
             </div>
         </>
     );

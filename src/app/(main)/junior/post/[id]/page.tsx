@@ -3,7 +3,6 @@
 
 import React, { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { getPost } from "@/lib/clientRepo";
 import { useRouter } from "next/navigation";
 import { postJuniorList, PostType } from "@/assets/mockdata/postJunior";
 import Image from 'next/image'
@@ -15,7 +14,6 @@ const Brand = "#6163FF";
 /** 화면에서 쓰는 미니 포스트 타입 (프리뷰/데모 용) */
 type Author = { name: string; age: string | number; gender: string };
 
-/* ---------- helpers ---------- */
 /* ---------- helpers ---------- */
 function formatAgo(createdAt: string) {
   const ts = new Date(createdAt).getTime();
@@ -210,7 +208,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           <div className="mt-6">
             {!!post.senior_type?.length && (
               <>
-                <div className="mt-3 flex flex-col gap-2">
+                <div className="mt-3 flex flex-col gap-3">
                   {post.senior_type.map((t, i) => (
                     <Chip textSize={18} color="primary" key={i}>{t}</Chip>
                   ))}
@@ -227,7 +225,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 <div className="font-medium-20 mt-5">
                   수업은...
                 </div>
-                <div className="mt-3 flex flex-col gap-4">
+                <div className="mt-3 flex flex-col gap-3">
                   <div className="flex gap-2 flex-wrap">
                     {post.days.map((d) => {
                       return (

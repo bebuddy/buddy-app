@@ -12,8 +12,8 @@ type Props = {
 export default function RefreshButton({ onClick, size = "md", className = "" }: Props) {
   const sizeClasses =
     size === "sm"
-      ? "font-medium-18 px-4 py-0.5 gap-1"
-      : "font-medium-18 px-4 py-0.5 gap-2";
+      ? "font-medium-18 px-6 py-2 gap-1"
+      : "font-medium-18 px-6 py-2 gap-2";
 
   const iconSize = size === "sm" ? 16 : 18;
 

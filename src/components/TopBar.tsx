@@ -7,7 +7,13 @@ import { ChevronDown } from "lucide-react";
 import { useEffect } from "react";
 import { useSelectedDong } from "@/lib/locationStore";
 
-export default function TopBar() {
+// 1. prop을 받기 위한 인터페이스 추가
+interface TopBarProps {
+  showLocation?: boolean; // '동' 버튼 표시 여부
+}
+
+// 2. props를 받고, showLocation의 기본값을 true로 설정
+export default function TopBar({ showLocation = true }: TopBarProps) {
   const router = useRouter();
   const { dong, setDong } = useSelectedDong();
 
@@ -54,24 +60,26 @@ export default function TopBar() {
             priority
           />
 
-          {/* 가운데: 동 토글 버튼 (누르면 동 검색 화면으로 라우팅) */}
-          <button
-            type="button"
-            onClick={() => console.log("준비중")}
-            className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 cursor-pointer hover:opacity-80"
-            aria-label="행정동 선택"
-          >
-            <span className="text-lg font-extrabold text-neutral-800">
-              {dong ?? "대현동"}
-            </span>
-            <ChevronDown className="w-4 h-4 text-neutral-700" />
-          </button>
+          {/* 3. showLocation이 true일 때만 '동' 버튼 렌더링 */}
+          {showLocation && (
+            <button
+              type="button"
+              onClick={() => console.log("준비중")}
+              className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 cursor-pointer hover:opacity-80"
+              aria-label="행정동 선택"
+            >
+              <span className="text-lg font-extrabold text-neutral-800">
+                {dong ?? "대현동"}
+              </span>
+              <ChevronDown className="w-4 h-4 text-neutral-700" />
+            </button>
+          )}
 
           {/* 오른쪽: 프로필(임시) */}
           <button
             aria-label="내 정보"
             className="w-8 h-8 rounded-full bg-neutral-300"
-            onClick={() => router.push('/myPage')}
+            onClick={() => router.push("/myPage")}
           />
         </div>
       </div>
