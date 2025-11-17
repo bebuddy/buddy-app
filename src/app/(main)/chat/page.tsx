@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from "react";
 import BottomNav from "@/components/BottomNav";
 import { RoomViewDto } from "@/types/chat.dto";
+import TopBar from "@/components/TopBar";
 
 import ChatTabs, { ChatTabType } from "@/components/ChatTabs";
 import ChatRoomList from "@/components/ChatRoomList";
@@ -36,10 +37,7 @@ export default function ChatPage() {
         style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }}
       >
         {/* 상단 '대화' 헤더와 오른쪽 아이콘 */}
-        <div className="flex justify-between items-center mb-4"> {/* flex 추가 */}
-          <div className="text-[28px] font-bold text-gray-900">대화</div> {/* 폰트 크기, 볼드 변경 */}
-          <div className="w-8 h-8 rounded-full bg-gray-200"></div> {/* 오른쪽 상단 동그라미 아이콘 */}
-        </div>
+        <TopBar showLocation={false} />
         
         <ChatTabs activeTab={activeTab} onTabChange={setActiveTab} />
 

@@ -61,7 +61,7 @@ export default function MyPage() {
       style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }}
     >
       {/* 상단 Back */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mb-4">
         <button
           type="button"
           aria-label="뒤로가기"
@@ -82,13 +82,13 @@ export default function MyPage() {
         <div className="w-16 h-16 rounded-full bg-neutral-200 shrink-0" />
         <div className="flex flex-col items-start">
           <div className="text-[18px] font-semibold text-neutral-900">{name}</div>
-          <div className="text-neutral-500">{tagline}</div>
+          <div className="text-[16px] text-neutral-500">{tagline}</div>
         </div>
       </button>
 
       {/* 관심분야 + 편집 버튼 */}
       <div className="mt-6 flex items-center justify-between">
-        <div className="text-[16px] font-semibold">관심분야</div>
+        <div className="text-[18px] font-semibold text-neutral-900">관심분야</div>
         <button
           type="button"
           onClick={() => { setTempInterests(interests); setOpenPicker(true); }}
@@ -111,11 +111,11 @@ export default function MyPage() {
               key={it}
               className={[
                 "px-3 py-1.5 rounded-full text-[16px] font-semibold border",
-                idx === 0 ? "text-white" : "text-neutral-700",
+                "text-white", // <-- text-white로 고정
               ].join(" ")}
               style={{
-                backgroundColor: idx === 0 ? ORANGE : "transparent",
-                borderColor: idx === 0 ? ORANGE : "#F2E6DE",
+                backgroundColor: ORANGE, // <-- ORANGE로 고정
+                borderColor: ORANGE, // <-- ORANGE로 고정
               }}
             >
               {it}
@@ -137,14 +137,14 @@ export default function MyPage() {
           }}
         >
           <div className="text-[18px] font-semibold text-neutral-900">나도 선배가 될래요</div>
-          <div className="text-neutral-600 mt-1">인증하고 선배가 되어보세요</div>
+          <div className="text-neutral-600 mt-1 text-[16px]">인증하고 선배가 되어보세요</div>
         </div>
       </Link>
 
       {/* 저장했어요 박스 */}
       <Link href="/myPage/mySaved" className="mt-3 block">
         <div className="rounded-2xl p-5 bg-white border border-neutral-200">
-          <div className="text-[16px] font-semibold text-neutral-800">
+          <div className="text-[18px] font-semibold text-neutral-900">
             저장했어요
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function MyPage() {
           }}
         >
           <div className="flex items-center gap-2">
-            <div className="text-[16px] font-semibold text-neutral-800">알림</div>
+            <div className="text-[18px] font-semibold text-neutral-900">알림</div>
             {notificationCount > 0 && (
               <span
                 className="min-w-6 h-6 px-2 rounded-full text-white text-[14px] font-bold flex items-center justify-center"

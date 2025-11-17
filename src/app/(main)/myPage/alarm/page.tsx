@@ -36,20 +36,21 @@ export default function AlarmPage() {
   };
   
   return (
-    <div className="flex flex-col h-screen bg-white">
-      {/* 1. 상단 헤더 (뒤로가기, 타이틀) */}
-      <div className="sticky top-0 z-10 flex items-center p-4 bg-white border-b border-gray-200">
+    <div
+      className="px-4 pt-4 pb-6"
+      style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }}
+    >
+      {/* 상단 Back */}
+      <div className="flex items-center gap-2 mb-4">
         <button
           type="button"
           aria-label="뒤로가기"
-          onClick={() => router.back()} // 'myPage'로 돌아가기
+          onClick={() => router.back()}
           className="p-1 -ml-1 rounded-full active:scale-95"
         >
           <ChevronLeft size={28} />
         </button>
-        <div className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold">
-          알림
-        </div>
+        <div className="text-[18px] font-semibold">알림</div>
       </div>
 
       {/* 2. 알림 목록 */}

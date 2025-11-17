@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PostCard from "@/components/PostCard";
+import { ChevronLeft } from "lucide-react";
 // 이 페이지에서 사용할 Item 타입 (PostCard의 Item과 동일해야 함)
 // 실제로는 `@/app/(main)/junior/page`에서 import 해야 합니다.
 export interface Item {
@@ -114,31 +115,22 @@ export default function MySavedPage() {
   );
 
   return (
-    <div className="w-full h-full bg-white">
-      {/* 헤더 */}
-      <header className="flex items-center p-4">
-        <button onClick={() => router.back()} className="p-2">
-          {/* 뒤로가기 아이콘 (SVG) */}
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M15 18L9 12L15 6"
-              stroke="#000000"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+    <div
+      className="px-4 pt-4 pb-6"
+      style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }}
+    >
+      {/* 상단 Back */}
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          type="button"
+          aria-label="뒤로가기"
+          onClick={() => router.back()}
+          className="p-1 -ml-1 rounded-full active:scale-95"
+        >
+          <ChevronLeft size={28} />
         </button>
-        <h1 className="text-xl font-semibold mx-auto -translate-x-6">
-          저장했어요
-        </h1>
-      </header>
+        <div className="text-[18px] font-semibold">저장했어요</div>
+      </div>
       {/* 탭 메뉴 */}
       <nav className="flex border-b border-neutral-200">
         <TabButton
