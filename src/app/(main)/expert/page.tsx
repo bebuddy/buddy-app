@@ -8,34 +8,47 @@ import MasterCard from "@/components/MasterCard";
 import InterestToggle from "@/components/InterestToggle";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNav from "@/components/BottomNav";
-import { getSeniorPostsByRandom } from "@/actions/post";
-import { ArticleRandomRes } from "@/types/postType";
 import RefreshButton from "@/components/RefreshButton";
 import WriteButton from "@/components/WriteButton";
-import { MOCKSENIORLIST, PostType } from "@/assets/mockdata/postSenior";
 
 const BRAND = "#6163FF";
 
-export function random(list: PostType[], count = 4): PostType[] {
-  // 배열을 복제한 후 섞고, 앞에서 count개만 잘라 반환
-  const shuffled = [...list].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
-}
+export type SeniorItem = {
+  id: string;
+  category: string;
+  title: string;
+  location?: string | null;
+  birth_date?: string | null;
+  image_url_l?: string | null;
+  nick_name?: string | null;
+  name?: string | null;
+};
 
 
 export default function ExpertPage() {
   const router = useRouter();
   const [interestOn, setInterestOn] = useState(false);
-  const [items, setItems] = useState<PostType[]>([]);
+  const [items, setItems] = useState<SeniorItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
 
   async function refreshItemList() {
     setIsLoading(true);
     try {
-      // const res = await getSeniorPostsByRandom(3);
-      // setItems(res.data);
-      setItems(random(MOCKSENIORLIST))
+      const res = await fetch("/api/posts/senior?count=20", { cache: "no-store" });
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 불러오지 못했습니다.");
+      const mapped: SeniorItem[] = (json.data ?? []).map((row: SeniorItem) => ({
+        id: row.id,
+        category: row.category,
+        title: row.title,
+        location: row.location,
+        birth_date: row.birth_date,
+        image_url_l: row.image_url_l,
+        nick_name: row.nick_name,
+        name: row.name,
+      }));
+      setItems(mapped);
     } catch (e) {
       console.error(e);
     } finally {
@@ -44,8 +57,7 @@ export default function ExpertPage() {
   }
 
   useEffect(() => {
-    setItems(random(MOCKSENIORLIST))
-    setIsLoading(false)
+    refreshItemList();
   }, []);
 
   return (

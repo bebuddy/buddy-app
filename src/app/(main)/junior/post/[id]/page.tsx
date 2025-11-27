@@ -3,16 +3,34 @@
 
 import React, { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { postJuniorList, PostType } from "@/assets/mockdata/postJunior";
-import Image from 'next/image'
+import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import { Chip } from "@/components/common/Chip";
-import { UserProfile, userProfiles } from "@/assets/mockdata/user";
 
 const Brand = "#6163FF";
 
-/** 화면에서 쓰는 미니 포스트 타입 (프리뷰/데모 용) */
-type Author = { name: string; age: string | number; gender: string };
+type FileItem = { id: string; key: string; original_file_name: string };
+
+type JuniorPost = {
+  id: string;
+  category: string;
+  title: string;
+  content: string;
+  image_url_m?: string | null;
+  updated_at?: string | null;
+  budget?: number | null;
+  budget_type?: string | null;
+  senior_type?: string[] | null;
+  class_type?: string | null;
+  dates_times?: { date?: string; time?: string }[] | null;
+  user?: {
+    nick_name?: string | null;
+    birth_date?: string | null;
+    gender?: string | null;
+    location?: string | null;
+  } | null;
+  files?: FileItem[] | null;
+};
 
 /* ---------- helpers ---------- */
 function formatAgo(createdAt: string) {
@@ -25,6 +43,24 @@ function formatAgo(createdAt: string) {
 
   const d = Math.floor(h / 24);
   return `${d}일 전`;
+}
+
+function uniqueDates(arr?: { date?: string; time?: string }[] | null) {
+  if (!Array.isArray(arr)) return [];
+  const set = new Set<string>();
+  arr.forEach((d) => {
+    if (d?.date) set.add(d.date);
+  });
+  return Array.from(set);
+}
+
+function uniqueTimes(arr?: { date?: string; time?: string }[] | null) {
+  if (!Array.isArray(arr)) return [];
+  const set = new Set<string>();
+  arr.forEach((d) => {
+    if (d?.time) set.add(d.time);
+  });
+  return Array.from(set);
 }
 
 
@@ -40,32 +76,41 @@ const SectionDivider = ({ className = "" }: { className?: string }) => (
 );
 
 /* ---------- page ---------- */
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  // React 19: params가 Promise — React.use로 언랩
-  const { id } = React.use(params);
+export default function Page() {
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
 
-  const [post, setPost] = React.useState<PostType | null>(null);
-  const [notFoundMsg, setNotFoundMsg] = React.useState<string | null>(null);
+  const [post, setPost] = useState<JuniorPost | null>(null);
+  const [notFoundMsg, setNotFoundMsg] = useState<string | null>(null);
 
   type Comment = { name: string; text: string; ts: number };
   const [comments, setComments] = React.useState<Comment[]>([]);
-  const [profile, setProfile] = useState<UserProfile>()
   const [cText, setCText] = React.useState("");
   const [meName, setMeName] = React.useState<string>("익명");
 
   const router = useRouter();
 
   useEffect(() => {
+    let active = true;
     if (!id) return;
 
-    const foundPost = postJuniorList.find((p) => p.id === id);
-    if (foundPost) {
-      setPost(foundPost);
-      //mockdata로
-      setProfile(userProfiles[foundPost?.user_id]);
-    }
+    const fetchPost = async () => {
+      try {
+        const res = await fetch(`/api/posts/junior/${id}`, { cache: "no-store" });
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 찾을 수 없습니다.");
+        if (!active) return;
+        setPost(json.data as JuniorPost);
+      } catch (error) {
+        console.error(error);
+        if (active) setNotFoundMsg(error instanceof Error ? error.message : "게시글을 찾을 수 없습니다.");
+      }
+    };
 
-
+    void fetchPost();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   function addComment() {
@@ -134,8 +179,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             {post.title}
           </h1>
 
-          {!!post?.created_at && (
-            <div className="mt-1 font-medium-16 text-neutral-500">{formatAgo(post?.created_at)}</div>
+          {!!post?.updated_at && (
+            <div className="mt-1 font-medium-16 text-neutral-500">{formatAgo(post?.updated_at)}</div>
           )}
 
           <SectionDivider className="mt-5" />
@@ -146,7 +191,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <span className="font-bold-18 text-neutral-900">
                 {post.budget_type === "협의"
                   ? ""
-                  : `${formatKRW(post.budget!)}원`}
+                  : post.budget != null
+                    ? `${formatKRW(post.budget)}원`
+                    : ""}
               </span>
             </div>
           </div>
@@ -227,16 +274,16 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 </div>
                 <div className="mt-3 flex flex-col gap-3">
                   <div className="flex gap-2 flex-wrap">
-                    {post.days.map((d) => {
+                    {uniqueDates(post.dates_times).map((d) => {
                       return (
-                        <Chip textSize={18}>{d}</Chip>
+                        <Chip key={d} textSize={18}>{d}</Chip>
                       )
                     })}
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {post.times.map((d) => {
+                    {uniqueTimes(post.dates_times).map((d) => {
                       return (
-                        <Chip textSize={18}>{d}</Chip>
+                        <Chip key={d} textSize={18}>{d}</Chip>
                       )
                     })}
                   </div>
@@ -250,13 +297,13 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           <SectionDivider className="mt-7" />
 
           {/* 작성자 소개 */}
-          {!!post.user_id && (
+          {!!post.user && (
             <div className="mt-5 flex items-center gap-3">
               <div className="w-[68px] h-[68px] rounded-full bg-neutral-200 overflow-hidden" />
               <div className="flex flex-col">
-                <div className="font-medium-20 text-neutral-900">{profile?.name}</div>
+                <div className="font-medium-20 text-neutral-900">{post.user?.nick_name ?? "사용자"}</div>
                 <div className="font-medium-14 text-neutral-700">
-                  {profile?.age}세 | {profile?.gender}
+                  {post.user?.gender ?? "정보 없음"}
                 </div>
               </div>
             </div>

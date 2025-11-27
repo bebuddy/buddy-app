@@ -4,19 +4,20 @@ type Props = {
   name: string;
   onClick?: () => void;
   isLoading?: boolean;
+  disabled?: boolean;
 };
 
-export default function FillButton({ name, onClick, isLoading = false }: Props) {
+export default function FillButton({ name, onClick, isLoading = false, disabled }: Props) {
   return (
     <button
       onClick={onClick}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       className={`
         relative flex justify-center items-center
         bg-secondary-500 text-white rounded-[6px] w-full py-3 text-medium-18
         transition-opacity duration-150
         hover:opacity-90 active:opacity-90 cursor-pointer
-        disabled:opacity-70
+        disabled:opacity-70 max-w-[728px] mx-auto
       `}
     >
       {isLoading ? (

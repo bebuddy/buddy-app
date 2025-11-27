@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // app/(onboarding)/onboarding/junior/page.tsx
 "use client";
 

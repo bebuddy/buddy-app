@@ -10,7 +10,7 @@ export type EntityStatus = "ACTIVE" | "BLOCKED" | "DELETED" | "INVALID" | "SEARC
 /**
  * 알림 타입 (NotificationViewDto)
  */
-export type NotificationType = "COMMNET" | "MESSAGE" | "MESSAGE_UNREAD";
+export type NotificationType = "COMMENT" | "MESSAGE" | "MESSAGE_UNREAD";
 
 
 // --- 공용 DTO (chat.dto.ts와 중복) ---
