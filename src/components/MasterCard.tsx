@@ -2,7 +2,6 @@
 
 "use client";
 
-import { PostType } from "@/assets/mockdata/postSenior";
 import { useRouter } from "next/navigation";
 import { Chip } from "./common/Chip";
 import SaveButton from "./SaveButton"; // ★ 1. SaveButton 임포트
@@ -11,7 +10,16 @@ export default function MasterCard({
   item,
   brand = "#6163FF",
 }: {
-  item: PostType;
+  item: {
+    id: string;
+    category: string;
+    title: string;
+    location?: string | null;
+    birth_date?: string | null;
+    image_url_l?: string | null;
+    nick_name?: string | null;
+    name?: string | null;
+  };
   brand?: string;
 }) {
   const router = useRouter();
@@ -21,7 +29,8 @@ export default function MasterCard({
     ? `${overlay}, url(${item.image_url_l})`
     : `${overlay}, linear-gradient(180deg,#cfcfcf,#9e9e9e)`;
 
-  const ageLabel = getKDecadeLabel(String(item.user.age));
+  const ageLabel = getKDecadeLabel(item.birth_date);
+  const displayName = item.nick_name || item.name || "선배";
 
   return (
     <div
@@ -39,7 +48,7 @@ export default function MasterCard({
         <div className="p-3 flex items-center justify-between">
           {/* 위치 칩 (왼쪽) */}
           <div className="px-3 py-1 rounded-full font-regular-16 bg-white/90 text-neutral-900 shadow">
-            ▼ {item?.user.location}
+            ▼ {item?.location ?? "지역 미설정"}
           </div>
           
           {/* 저장 버튼 (오른쪽) */}
@@ -53,7 +62,7 @@ export default function MasterCard({
           </div>
 
           <div className="font-medium-22 line-clamp-1">
-            {item.user.name}
+            {displayName}
             {ageLabel ? `, ${ageLabel}` : ""}
           </div>
 
@@ -70,23 +79,29 @@ export default function MasterCard({
 }
 
 // ★ 3. getKDecadeLabel 함수 (기존과 동일)
-function getKDecadeLabel(birthOrAge?: string | number) {
+function getKDecadeLabel(birthOrAge?: string | number | null) {
   if (!birthOrAge) return "";
-  const val = Number(birthOrAge);
-  const now = new Date();
 
-  // 1900~2099면 출생연도, 아니면 나이로 인식
-  if (val >= 1900 && val <= now.getFullYear()) {
-    const age = now.getFullYear() - val;
-    const decade = Math.floor(age / 10) * 10;
-    const mod = age % 10;
-    const part = mod <= 3 ? "초반" : mod <= 6 ? "중반" : "후반";
-    return `${decade}대 ${part}`;
+  const now = new Date();
+  let age: number | null = null;
+
+  if (typeof birthOrAge === "string") {
+    // 생년월일 문자열이면 연도 기반으로 변환
+    const date = new Date(birthOrAge);
+    if (!Number.isNaN(date.getTime())) {
+      age = now.getFullYear() - date.getFullYear();
+    } else {
+      const asNum = Number(birthOrAge);
+      age = Number.isFinite(asNum) ? asNum : null;
+    }
+  } else {
+    age = Number.isFinite(birthOrAge) ? Number(birthOrAge) : null;
   }
 
-  // 나이 기반 계산
-  const decade = Math.floor(val / 10) * 10;
-  const mod = val % 10;
+  if (age === null || !Number.isFinite(age) || age <= 0) return "";
+
+  const decade = Math.floor(age / 10) * 10;
+  const mod = age % 10;
   const part = mod <= 3 ? "초반" : mod <= 6 ? "중반" : "후반";
   return `${decade}대 ${part}`;
 }

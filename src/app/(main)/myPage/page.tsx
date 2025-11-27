@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Plus } from "lucide-react";
@@ -43,17 +43,66 @@ const INTEREST_GROUPS: { title: string; options: Interest[] }[] = [
 export default function MyPage() {
   const router = useRouter();
 
-  // --- 프로필 & 관심사(예시) 상태 ---
-  const [name] = useState("장미야");
-  const [tagline] = useState("장미야");
-  const [interests, setInterests] = useState<Interest[]>(["식물", "요리", "다도"]);
+  // --- 프로필 & 관심사 상태 ---
+  const [name, setName] = useState<string>("사용자");
+  const [tagline, setTagline] = useState<string>("프로필을 업데이트해주세요");
+  const [interests, setInterests] = useState<Interest[]>([]);
 
   // --- 관심사 편집 바텀시트 ---
   const [openPicker, setOpenPicker] = useState(false);
   const [tempInterests, setTempInterests] = useState<Interest[]>(interests);
 
-  // --- 알림 개수(하드코딩) ---
-  const notificationCount = 2;
+  const [notificationCount, setNotificationCount] = useState<number>(0);
+
+  async function loadInterests() {
+    try {
+      const res = await fetch("/api/users/interests", { cache: "no-store" });
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.message ?? "관심사를 불러오지 못했습니다.");
+      const list = (json.data as string[] | undefined) ?? [];
+      setInterests(list as Interest[]);
+      setTempInterests(list as Interest[]);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    let active = true;
+    const fetchMe = async () => {
+      try {
+        const res = await fetch("/api/users/me", { cache: "no-store" });
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.message ?? "내 정보를 불러오지 못했습니다.");
+        if (!active) return;
+        const user = json.data as {
+          nick_name?: string | null;
+          introduction?: string | null;
+          location?: string | null;
+        };
+        setName(user.nick_name || "사용자");
+        setTagline(user.location || user.introduction || "프로필을 업데이트해주세요");
+        // TODO: 관심사 컬럼이 생기면 여기서 setInterests에 반영
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    void fetchMe();
+    void loadInterests();
+    void (async () => {
+      try {
+        const res = await fetch("/api/notifications/unread-count", { cache: "no-store" });
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.message ?? "알림을 불러오지 못했습니다.");
+        setNotificationCount(Number(json.data?.unreadCount ?? 0));
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div
@@ -227,8 +276,23 @@ export default function MyPage() {
                 <button
                 type="button"
                 onClick={() => {
-                    setInterests(tempInterests);
-                    setOpenPicker(false);
+                    void (async () => {
+                        try {
+                            const res = await fetch("/api/users/interests", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ values: tempInterests }),
+                            });
+                            const json = await res.json();
+                            if (!res.ok || !json?.success) throw new Error(json?.message ?? "관심사 저장 실패");
+                            setInterests(json.data as Interest[]);
+                        } catch (error) {
+                            console.error(error);
+                            alert("관심사 저장에 실패했습니다.");
+                        } finally {
+                            setOpenPicker(false);
+                        }
+                    })();
                 }}
                 className="h-12 flex-1 rounded-xl text-white font-semibold"
                 style={{ backgroundColor: ORANGE }}

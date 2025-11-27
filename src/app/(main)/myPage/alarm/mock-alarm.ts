@@ -39,7 +39,7 @@ import {
   // --- 개별 알림 (NotificationViewDto) ---
   const NOTIFICATION_1: NotificationViewDto = {
     uuid: "noti-1",
-    notificationType: "COMMNET", // DTO Enum 오타 수정 (COMMNET -> COMMENT 가정)
+    notificationType: "COMMENT", // DTO Enum 오타 수정 (COMMNET -> COMMENT 가정)
     title: "새로운 댓글",
     content: "“고수는 아니지만 연락주세요!”",
     actionUrl: "/expert/post/123", // 예시 링크
@@ -56,7 +56,7 @@ import {
   
   const NOTIFICATION_2: NotificationViewDto = {
     uuid: "noti-2",
-    notificationType: "COMMNET",
+    notificationType: "COMMENT",
     title: "새로운 댓글",
     content: "“주말 오후에 잠시 도와드릴 수 있을 것 같아요~”",
     actionUrl: "/junior/post/456",
@@ -73,7 +73,7 @@ import {
   
   const NOTIFICATION_3: NotificationViewDto = {
     uuid: "noti-3",
-    notificationType: "COMMNET",
+    notificationType: "COMMENT",
     title: "새로운 댓글",
     content: "“멋지네요 ㅎㅎ”",
     actionUrl: "/expert/post/123",

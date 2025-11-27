@@ -1,5 +1,4 @@
 "use client";
-import { getUploadUrlAction, insertFilesAction /*, deleteFilesAction */ } from "@/actions/file";
 import { useEffect, useRef, useState } from "react";
 
 interface PhotoUploadProps {
@@ -61,7 +60,16 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
           const file = item.file;
 
           // presigned URL 발급
-          const { uploadUrl, key } = await getUploadUrlAction(bucket, file.name);
+          const uploadReq = await fetch("/api/files/upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bucket, fileName: file.name }),
+          });
+          const uploadRes = await uploadReq.json();
+          if (!uploadReq.ok || !uploadRes?.success) {
+            throw new Error(uploadRes?.message ?? "업로드 URL 발급 실패");
+          }
+          const { uploadUrl, key } = uploadRes as { uploadUrl: string; key: string };
 
           // 실제 업로드
           const res = await fetch(uploadUrl, {
@@ -81,10 +89,13 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
       );
 
       // DB 기록
-      const dbRes = await insertFilesAction(
-        uploadedFiles.map(({ key, name, size }) => ({ key, name, size }))
-      );
-      if (!dbRes.success) throw new Error("file 메타데이터 저장 실패");
+      const dbReq = await fetch("/api/files/bulk-insert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(uploadedFiles.map(({ key, name, size }) => ({ key, name, size }))),
+      });
+      const dbRes = await dbReq.json();
+      if (!dbReq.ok || !dbRes?.success) throw new Error(dbRes?.message ?? "file 메타데이터 저장 실패");
 
       // 상위에 누적 key 전달
       const keys = (prevKeys: string[]) =>

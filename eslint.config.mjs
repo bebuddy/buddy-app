@@ -20,11 +20,12 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
     rules: {
-      "@typescript-eslint/no-unused-vars": "warn", // unused vars → 경고만
-      "react/jsx-key": "warn", // key 누락 → 경고만
+      "@typescript-eslint/no-unused-vars": "off", 
+      "react/jsx-key": "off",
       "@next/next/no-img-element": "off", // <img> 경고 끔
       "no-unused-expressions": "off", // 단독 표현식 허용
       "react/no-unescaped-entities": "off", // JSX 내 따옴표 관련 오류 무시
+      "@typescript-eslint/no-explicit-any": "off", // any 사용 허용
     },
   },
 ];

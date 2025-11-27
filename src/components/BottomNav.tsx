@@ -27,7 +27,7 @@ export default function BottomNav() {
             active === "recommend" ? "font-extrabold text-neutral-900" : "text-neutral-500"
           }`}
           aria-current={active === "recommend" ? "page" : undefined}
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/junior")}
         >
           <div
             className={`w-3 h-3 rounded-full ${

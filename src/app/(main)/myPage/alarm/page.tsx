@@ -1,39 +1,103 @@
 // src/app/(main)/myPage/alarm/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
-import { UserNotificationViewDto } from "@/types/notification.dto"; // DTO 경로
-import { MOCK_ALARM_LIST } from "./mock-alarm"; // Mock Data 임포트
 import AlarmItem from "@/components/AlarmItem"; // 방금 만든 컴포넌트
+
+type NotificationItem = {
+  id: string;
+  isRead: boolean;
+  createdAt: string;
+  notificationId?: string;
+  title?: string;
+  content?: string;
+  actionUrl?: string;
+  data?: string;
+  type?: "COMMENT" | "MESSAGE" | "MESSAGE_UNREAD";
+  sentAt?: string;
+};
 
 export default function AlarmPage() {
   const router = useRouter();
-  const [alarms, setAlarms] = useState<UserNotificationViewDto[]>([]);
+  const [alarms, setAlarms] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const cursorRef = useRef<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  // 1. Mock Data 로드
-  useEffect(() => {
-    // 실제로는 UserNotificationPaginationRequestDto로 API 호출
-    setIsLoading(true);
-    setTimeout(() => {
-      setAlarms(MOCK_ALARM_LIST.data);
+  async function fetchAlarms(initial = false) {
+    if (initial) {
+      setIsLoading(true);
+    } else {
+      setIsFetchingMore(true);
+    }
+    try {
+      const params = new URLSearchParams();
+      if (cursorRef.current) params.set("cursor", cursorRef.current);
+      params.set("limit", "20");
+
+      const res = await fetch(`/api/notifications?${params.toString()}`, { cache: "no-store" });
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.message ?? "알림을 불러오지 못했습니다.");
+
+      const { items, nextCursor, hasMore: more } = json.data as {
+        items: NotificationItem[];
+        nextCursor: string | null;
+        hasMore: boolean;
+      };
+
+      setAlarms((prev) => (initial ? items : [...prev, ...items]));
+      cursorRef.current = nextCursor;
+      setHasMore(Boolean(more));
+    } catch (error) {
+      console.error(error);
+    } finally {
       setIsLoading(false);
-    }, 300); // 가짜 로딩
+      setIsFetchingMore(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchAlarms(true);
   }, []);
 
   // 2. 알림 클릭 시 '읽음' 처리 (상태 업데이트)
-  const handleMarkAsRead = (uuid: string) => {
-    // 실제로는 UserNotificationEditDto API 호출 후,
-    // 응답 성공 시 setAlarms(..) 실행
-    
-    setAlarms((prevAlarms) =>
-      prevAlarms.map((alarm) =>
-        alarm.uuid === uuid ? { ...alarm, isRead: true } : alarm
-      )
-    );
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      const res = await fetch("/api/notifications/mark-read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.message ?? "읽음 처리 실패");
+      setAlarms((prevAlarms) =>
+        prevAlarms.map((alarm) =>
+          alarm.id === id ? { ...alarm, isRead: true } : alarm
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  // 무한 스크롤: 하단 근접 시 추가 로드
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      if (!hasMore || isFetchingMore) return;
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      if (scrollHeight - scrollTop - clientHeight < 120) {
+        fetchAlarms(false);
+      }
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [hasMore, isFetchingMore]);
   
   return (
     <div
@@ -59,7 +123,7 @@ export default function AlarmPage() {
           알림을 불러오는 중...
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {alarms.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-gray-500 pt-20">
               표시할 알림이 없습니다.
@@ -68,11 +132,16 @@ export default function AlarmPage() {
             <div className="divide-y divide-gray-100">
               {alarms.map((item) => (
                 <AlarmItem
-                  key={item.uuid}
+                  key={item.id}
                   item={item}
                   onMarkAsRead={handleMarkAsRead}
                 />
               ))}
+              {hasMore && (
+                <div className="py-4 text-center text-sm text-gray-500">
+                  {isFetchingMore ? "불러오는 중..." : "더 불러오는 중..."}
+                </div>
+              )}
             </div>
           )}
         </div>
