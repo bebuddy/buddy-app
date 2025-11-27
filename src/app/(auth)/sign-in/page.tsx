@@ -1,39 +1,52 @@
 "use client";
 
 import React from "react";
-import Image from "next/image"
-import FillButton from "@/components/common/FillButton";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function SigninPage() {
-    const router = useRouter();
+    // ✅ Google 로그인 함수 (Route Handler 경유)
+    const handleGoogleSignin = async () => {
+        try {
+            window.location.href = "/api/auth/login?provider=google";
+        } catch (error) {
+            console.error("Google login error:", error);
+            alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+        }
+    };
 
     return (
         <>
             <div className="flex flex-col w-full items-center min-h-dvh justify-center">
-                <div className="relative w-[168px] h-[168px] mb-[44px]">
-                    <Image
-                        src='/graphicLogo.png'
-                        fill
-                        alt="graphicLogo" />
+                {/* 로고 */}
+                <div className="relative w-[224px] h-[224px] mb-[44px]">
+                    <Image src="/graphicLogo.png" fill alt="graphicLogo" />
                 </div>
+
+                {/* 타이틀 */}
                 <span className="flex font-bold-22 mb-4">당신의 Companion, 벗</span>
-                <div className="flex flex-col text-regular-20 text-[#333333] text-center">
+
+                {/* 설명 문구 */}
+                <div className="flex flex-col font-medium-18 text-[#333333] text-center mb-8">
                     <span>당신의 일자리 찾기, 벗이 도와드릴게요.</span>
                     <span>재밌게 행복하게 시작해보세요!</span>
                 </div>
-            </div>
-            <div
-                // 1. OnboardingNav의 <nav> 스타일: 위치 고정 및 중앙 정렬
-                className="fixed bottom-0 z-50 left-1/2 -translate-x-1/2 w-full max-w-[768px]"
-            >
-                {/* 2. OnboardingNav의 내부 <div> 스타일: 패딩 및 safe-area 적용 */}
-                <div
-                    className="p-4" // 좌우 여백 (16px)
-                    style={{ paddingBottom: "calc(25px + env(safe-area-inset-bottom))" }} // OnboardingNav와 동일한 하단 패딩
+
+                {/* ✅ Google 로그인 버튼 */}
+                <button
+                    onClick={handleGoogleSignin}
+                    className="flex items-center justify-center gap-2 border border-gray-300 px-8 py-4 rounded-xl hover:bg-gray-100 active:bg-gray-100"
                 >
-                    <FillButton name="시작하기" onClick={()=> router.push('/verify')}/>
-                </div>
+                    <Image
+                        src="/google-icon.png"
+                        width={24}
+                        height={24}
+                        alt="Google"
+                        className="object-contain"
+                    />
+                    <span className="font-bold-18 text-[#333] font-medium">
+                        Google로 시작하기
+                    </span>
+                </button>
             </div>
         </>
     );
