@@ -28,7 +28,11 @@ async function createSupabaseClient() {
 export async function GET(request: NextRequest) {
   const provider = (request.nextUrl.searchParams.get("provider") ?? "google") as "google";
   const supabase = await createSupabaseClient();
-  const origin = request.nextUrl.origin;
+  // Prefer a configured site URL to avoid accidental localhost redirects in production
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    request.nextUrl.origin;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
