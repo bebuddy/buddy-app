@@ -17,12 +17,6 @@ async function getUser(): Promise<User | null> {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: Record<string, unknown>) {
-          cookieStore.set({ name, value, ...options, path: "/" });
-        },
-        remove(name: string, options: Record<string, unknown>) {
-          cookieStore.delete({ name, ...options, path: "/" });
-        },
       },
     }
   );

@@ -47,6 +47,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         dates_times,
         status,
         user:user_id (
+          auth_id,
+          id,
           nick_name,
           birth_date,
           gender,

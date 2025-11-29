@@ -1,113 +1,215 @@
 // src/app/(main)/chat/[roomUuid]/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { SimpleUserDto, UserMessageViewDto } from "@/types/chat.dto";
-import {
-  // ★ 수정된 mock-data import
-  MY_USER_ID,
-  MY_USER,
-  MOCK_PARTNER_1,
-  MOCK_MESSAGES_123,
-  MOCK_PARTNER_2,
-  MOCK_MESSAGES_456,
-} from "./mock-data";
-
-// 컴포넌트 임포트
+import { supabase } from "@/lib/supabase";
 import ChatHeader from "@/components/ChatHeader";
 import ChatProfileHeader from "@/components/ChatProfileHeader";
 import MessageList from "@/components/MessageList";
 import MessageInput from "@/components/MessageInput";
+import { useRouter } from "next/navigation";
 
-// --- 1. 'params' prop 받기 위한 interface ---
 interface ChatRoomPageProps {
   params: { roomUuid: string };
 }
 
-export default function ChatRoomPage({ params }: ChatRoomPageProps) { // ★ params 받기
+type PostSummary = { id: string; title: string; type: "junior" | "senior"; thumbnail?: string | null };
+
+const fallbackUser = (uuid: string, name = "상대방"): SimpleUserDto => ({
+  uuid,
+  name,
+  schoolName: "",
+  age: undefined,
+  region: undefined,
+  introduction: undefined,
+  profileImageUrl: null,
+  createdBy: uuid,
+  createdDate: new Date().toISOString(),
+  elapsedCreatedDate: "방금",
+  entityStatus: "ACTIVE",
+  lastModifiedBy: uuid,
+  lastModifiedDate: new Date().toISOString(),
+});
+
+export default function ChatRoomPage({ params }: ChatRoomPageProps) {
   const [messages, setMessages] = useState<UserMessageViewDto[]>([]);
-  // --- 2. 'partnerInfo' 초기 상태 null로 변경 ---
   const [partnerInfo, setPartnerInfo] = useState<SimpleUserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFirstMessage, setIsFirstMessage] = useState(false);
+  const [myUserId, setMyUserId] = useState<string>("");
+  const [postSummary, setPostSummary] = useState<PostSummary | null>(null);
+  const router = useRouter();
 
-  // --- 3. 'useEffect'에서 'params.roomUuid' 사용 ---
   useEffect(() => {
-    setIsLoading(true);
-    
-    // 가짜 로딩
-    setTimeout(() => {
-      let partner: SimpleUserDto | null = null;
-      let messageList: UserMessageViewDto[] = [];
-      
-      // ★ URL의 roomUuid에 따라 다른 Mock Data 선택
-      if (params.roomUuid === "room-123") {
-        partner = MOCK_PARTNER_1;
-        messageList = MOCK_MESSAGES_123;
-      } else if (params.roomUuid === "room-456") {
-        partner = MOCK_PARTNER_2;
-        messageList = MOCK_MESSAGES_456;
-      } else {
-        // 일치하는 방이 없을 경우 (예: 새 채팅방)
-        messageList = [];
-        // partner = (API로 찾아온 파트너 정보); // 새 채팅방 파트너 정보 설정
-      }
+    const load = async () => {
+      setIsLoading(true);
 
-      setPartnerInfo(partner);
-      setMessages(messageList);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const myId = user?.id ?? "";
+      setMyUserId(myId);
 
-      // '첫 메시지' 여부 판단
-      if (messageList.length === 0) {
+      try {
+        const res = await fetch(`/api/messages/${params.roomUuid}/messages`, { cache: "no-store" });
+        const json = await res.json();
+        if (!res.ok || !json?.success) {
+          throw new Error(json?.message ?? "메시지를 불러올 수 없습니다.");
+        }
+
+        const partner = json.data?.partner as
+          | { auth_id?: string | null; nick_name?: string | null; gender?: string | null; location?: string | null; introduction?: string | null; profile_image?: string | null }
+          | null;
+
+        const partnerUser: SimpleUserDto | null = partner
+          ? {
+              uuid: partner.auth_id ?? "partner",
+              name: partner.nick_name ?? "상대방",
+              schoolName: "",
+              age: undefined,
+              region: partner.location ?? undefined,
+              introduction: partner.introduction ?? undefined,
+              profileImageUrl: partner.profile_image ?? null,
+              createdBy: partner.auth_id ?? "partner",
+              createdDate: new Date().toISOString(),
+              elapsedCreatedDate: "",
+              entityStatus: "ACTIVE",
+              lastModifiedBy: partner.auth_id ?? "partner",
+              lastModifiedDate: new Date().toISOString(),
+            }
+          : fallbackUser("partner", "상대방");
+
+        setPostSummary(json.data?.postSummary ?? null);
+
+        const rows: { id: string; sender_id: string; body: string; is_read: boolean; created_at: string }[] =
+          json.data?.messages ?? [];
+
+        const mapped: UserMessageViewDto[] = rows.map((row) => {
+          const senderIsMe = row.sender_id === myId;
+          const sender = senderIsMe ? fallbackUser(myId, "나") : partnerUser;
+          const receiver = senderIsMe ? partnerUser : fallbackUser(myId || "me", "나");
+
+          return {
+            uuid: row.id,
+            message: row.body,
+            sender: sender ?? fallbackUser(row.sender_id, "상대방"),
+            receiver: receiver ?? fallbackUser(senderIsMe ? "partner" : myId || "me"),
+            roomUuid: params.roomUuid,
+            createdDate: row.created_at,
+            elapsedCreatedDate: "",
+            isRead: row.is_read,
+            createdBy: row.sender_id,
+            entityStatus: "ACTIVE",
+            isAnonymous: false,
+            lastModifiedBy: row.sender_id,
+            lastModifiedDate: row.created_at,
+          };
+        });
+
+        setMessages(mapped);
+        setPartnerInfo(partnerUser);
+        setIsFirstMessage(mapped.length === 0);
+      } catch (error) {
+        console.error(error);
+        setPartnerInfo(fallbackUser("partner", "상대방"));
         setIsFirstMessage(true);
-      } else {
-        setIsFirstMessage(false);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
-    }, 500); // 0.5초 로딩
-  }, [params.roomUuid]); // ★ 'roomUuid'가 바뀔 때마다 이 effect가 다시 실행됨
+    };
 
-  const handleSendMessage = (newMessageText: string) => {
+    void load();
+  }, [params.roomUuid]);
+
+  const handleSendMessage = async (newMessageText: string) => {
     if (isFirstMessage) {
       setIsFirstMessage(false);
     }
-    
-    if (!partnerInfo) return; // 파트너 정보가 없으면 전송 불가
 
-    const newMessageMock: UserMessageViewDto = {
-      uuid: `msg-${Math.random()}`,
+    const partner = partnerInfo ?? fallbackUser("partner");
+    if (!myUserId) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    // optimistic append
+    const optimistic: UserMessageViewDto = {
+      uuid: `msg-${crypto.randomUUID()}`,
       message: newMessageText,
-      sender: MY_USER,
-      receiver: partnerInfo, // 현재 'partnerInfo' 상태 사용
-      roomUuid: params.roomUuid, // URL 파라미터의 roomUuid 사용
+      sender: fallbackUser(myUserId, "나"),
+      receiver: partner,
+      roomUuid: params.roomUuid,
       createdDate: new Date().toISOString(),
       elapsedCreatedDate: "방금",
       isRead: false,
-      createdBy: MY_USER_ID,
+      createdBy: myUserId,
       entityStatus: "ACTIVE",
       isAnonymous: false,
-      lastModifiedBy: MY_USER_ID,
+      lastModifiedBy: myUserId,
       lastModifiedDate: new Date().toISOString(),
     };
+    setMessages((prev) => [...prev, optimistic]);
 
-    setMessages((prevMessages) => [...prevMessages, newMessageMock]);
+    try {
+      const res = await fetch(`/api/messages/${params.roomUuid}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: newMessageText }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success || !json?.data) {
+        throw new Error(json?.message ?? "메시지 전송 실패");
+      }
+      // replace optimistic with real
+      setMessages((prev) =>
+        prev
+          .filter((m) => m.uuid !== optimistic.uuid)
+          .concat({
+            ...optimistic,
+            uuid: json.data.id,
+            createdDate: json.data.created_at,
+            isRead: json.data.is_read,
+          })
+      );
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "메시지 전송 실패");
+      setMessages((prev) => prev.filter((m) => m.uuid !== optimistic.uuid));
+    }
   };
 
-  // --- 4. 로딩 및 'partnerInfo'가 없을 때 처리 ---
-  if (isLoading || !partnerInfo) {
+  const partnerName = useMemo(() => partnerInfo?.name ?? "상대방", [partnerInfo]);
+  const postUrl = useMemo(() => {
+    if (!postSummary) return null;
+    return postSummary.type === "senior" ? `/expert/post/${postSummary.id}` : `/junior/post/${postSummary.id}`;
+  }, [postSummary]);
+
+  if (isLoading) {
     return <div className="flex h-screen items-center justify-center">채팅방을 불러오는 중...</div>;
   }
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <ChatHeader partnerName={partnerInfo.name} />
+      <ChatHeader partnerName={partnerName} />
 
-      {isFirstMessage && (
+      {postSummary && (
+        <button
+          type="button"
+          onClick={() => {
+            if (postUrl) router.push(postUrl);
+          }}
+          className="w-full text-left px-4 py-2 text-xs text-neutral-600 bg-neutral-50 border-b border-neutral-200 hover:bg-neutral-100"
+        >
+          {postSummary.type === "senior" ? "선배" : "후배"} 게시글 · {postSummary.title}
+        </button>
+      )}
+
+      {isFirstMessage && partnerInfo && (
         <ChatProfileHeader partner={partnerInfo} />
       )}
 
-      {/* --- 5. 'myUserId' prop 전달 --- */}
-      <MessageList messages={messages} myUserId={MY_USER_ID} />
+      <MessageList messages={messages} myUserId={myUserId || "me"} />
 
       <MessageInput onSendMessage={handleSendMessage} />
     </div>

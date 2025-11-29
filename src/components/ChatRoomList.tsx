@@ -5,7 +5,9 @@ import { RoomViewDto } from "@/types/chat.dto";
 import ChatRoomItem from "./ChatRoomItem";
 
 interface ChatRoomListProps {
-  rooms: RoomViewDto[];
+  rooms: (RoomViewDto & {
+    postSummary?: { id: string; title: string; type: "junior" | "senior"; thumbnail?: string | null } | null;
+  })[];
 }
 
 export default function ChatRoomList({ rooms }: ChatRoomListProps) {

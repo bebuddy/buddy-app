@@ -30,6 +30,8 @@ type SeniorPost = {
   } | null;
   reviewList?: { title: string; content: string[] }[] | null;
   user?: {
+    auth_id?: string | null;
+    id?: string | null;
     nick_name?: string | null;
     name?: string | null;
     birth_date?: string | null;
@@ -45,6 +47,7 @@ export default function Page() {
 
   const [post, setPost] = useState<SeniorPost | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isStartingChat, setIsStartingChat] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -209,9 +212,38 @@ export default function Page() {
             <button
               className="w-full h-[62px] rounded-xl text-white font-bold-20"
               style={{ backgroundColor: Brand }}
-              onClick={() => router.push("/chat")}
+              onClick={async () => {
+                const targetUserId = post?.user?.auth_id ?? post?.user?.id;
+                if (!post?.id || !targetUserId) {
+                  alert("작성자 정보를 불러올 수 없습니다.");
+                  return;
+                }
+                try {
+                  setIsStartingChat(true);
+                  const res = await fetch("/api/messages/thread", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      postType: "senior",
+                      postId: post.id,
+                      targetUserId,
+                    }),
+                  });
+                  const json = await res.json();
+                  if (!res.ok || !json?.success || !json?.data?.id) {
+                    throw new Error(json?.message ?? "채팅을 시작할 수 없습니다.");
+                  }
+                  router.push(`/chat/${json.data.id}`);
+                } catch (err) {
+                  console.error(err);
+                  alert(err instanceof Error ? err.message : "채팅을 시작할 수 없습니다.");
+                } finally {
+                  setIsStartingChat(false);
+                }
+              }}
+              disabled={isStartingChat}
             >
-              채팅하기
+              {isStartingChat ? "열고 있어요..." : "채팅하기"}
             </button>
           </div>
         </div>

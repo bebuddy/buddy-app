@@ -24,6 +24,8 @@ type JuniorPost = {
   class_type?: string | null;
   dates_times?: { date?: string; time?: string }[] | null;
   user?: {
+    auth_id?: string | null;
+    id?: string | null;
     nick_name?: string | null;
     birth_date?: string | null;
     gender?: string | null;
@@ -82,6 +84,7 @@ export default function Page() {
 
   const [post, setPost] = useState<JuniorPost | null>(null);
   const [notFoundMsg, setNotFoundMsg] = useState<string | null>(null);
+  const [isStartingChat, setIsStartingChat] = useState(false);
 
   type Comment = { name: string; text: string; ts: number };
   const [comments, setComments] = React.useState<Comment[]>([]);
@@ -118,6 +121,37 @@ export default function Page() {
     if (!text) return;
     setComments((prev) => [{ name: meName, text, ts: Date.now() }, ...prev]);
     setCText("");
+  }
+
+  async function handleStartChat() {
+    const targetUserId = post?.user?.auth_id ?? post?.user?.id;
+    if (!post?.id || !targetUserId) {
+      alert("작성자 정보를 불러올 수 없습니다.");
+      return;
+    }
+
+    try {
+      setIsStartingChat(true);
+      const res = await fetch("/api/messages/thread", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postType: "junior",
+          postId: post.id,
+          targetUserId,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success || !json?.data?.id) {
+        throw new Error(json?.message ?? "채팅을 시작할 수 없습니다.");
+      }
+      router.push(`/chat/${json.data.id}`);
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "채팅을 시작할 수 없습니다.");
+    } finally {
+      setIsStartingChat(false);
+    }
   }
 
   if (!post) {
@@ -310,6 +344,20 @@ export default function Page() {
           )}
 
           <div className="h-24" />
+        </div>
+
+        {/* 하단 채팅 버튼 (expert 상세와 동일 톤) */}
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] px-5 pb-[env(safe-area-inset-bottom)] bg-white/80 backdrop-blur">
+          <div className="py-3 pb-8 flex items-center">
+            <button
+              className="w-full h-[62px] rounded-xl text-white font-bold-20"
+              style={{ backgroundColor: Brand }}
+              onClick={handleStartChat}
+              disabled={isStartingChat}
+            >
+              {isStartingChat ? "열고 있어요..." : "채팅하기"}
+            </button>
+          </div>
         </div>
 
         <div style={{ height: "calc(16px + env(safe-area-inset-bottom))" }} />

@@ -42,6 +42,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         dates_times,
         image_url_l,
         user:user_id (
+          auth_id,
+          id,
           nick_name,
           name,
           birth_date,
