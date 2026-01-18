@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createRouteSupabaseClient } from "@/lib/serverSupabase";
 
 type UploadedFile = {
   key: string;
@@ -12,6 +12,7 @@ type UploadedFile = {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createRouteSupabaseClient();
     const uploadedFiles = (await request.json()) as UploadedFile[];
 
     if (!Array.isArray(uploadedFiles) || uploadedFiles.length === 0) {
@@ -22,8 +23,8 @@ export async function POST(request: Request) {
       key: f.key,
       original_file_name: f.name,
       size: f.size,
+      bucket: process.env.NEXT_PUBLIC_S3_BUCKET_NAME,
       status: "UPLOADED",
-      user_id: f.userId,
       post_junior_id: f.postJuniorId,
       post_senior_id: f.postSeniorId,
     }));

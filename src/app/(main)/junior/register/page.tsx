@@ -11,6 +11,8 @@ import LabeledTextarea from "@/components/LabeledTextarea";
 import ChipGroup from "@/components/ChipGroup";
 import PriceInput from "@/components/PriceInput";
 import PhotoUpload from "@/components/PhotoUpload";
+import type { RegisterJuniorReq } from "@/types/postType";
+import { BudgetType, ClassType, GenderType, TimeType } from "@/types/postType";
 
 // (백엔드 연동은 나중에 붙일 예정이므로 타입만 지역 선언)
 type Unit = "시간" | "건당";
@@ -63,22 +65,6 @@ const TIMES = [
   TIME_AGREE,
 ] as const;
 
-// 상세 페이지에서 기대하는 최소 형태(프리뷰용)
-type PreviewPost = {
-  id: string;
-  title: string;
-  category: string | null;
-  createdAt: number;
-  imageUrls: string[];
-  priceKRW: number;
-  unit: string | null;
-  timeNote: string;
-  paragraphs: string[];
-  mentorTypes: string[];
-  meetPref: string | null;
-  author: { name: string; age: string | number; gender: string };
-};
-
 export default function WritePage() {
   const router = useRouter();
 
@@ -99,6 +85,7 @@ export default function WritePage() {
   const [negotiable, setNegotiable] = useState(false);
 
   const [fileKeys, setFileKeys] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 협의 선택 로직
   function handleDaysChange(next: string[]) {
@@ -137,46 +124,92 @@ export default function WritePage() {
     return hasTitle && hasDesc && hasCategory && hasMeet && hasPrice;
   }, [title, desc, category, meetPref, price, negotiable]);
 
-  // 제출: 로컬 프리뷰 저장 후 /junior/post/preview 이동
-  async function handleSubmit() {
-    if (!isValid) return;
+  function extractPostId(data: unknown): string | null {
+    if (!data) return null;
+    if (typeof data === "string") return data;
+    if (Array.isArray(data)) return extractPostId(data[0]);
+    if (typeof data !== "object") return null;
+    const record = data as Record<string, unknown>;
+    const id = record.id ?? record.post_id ?? record.post_junior_id ?? record.postId;
+    return typeof id === "string" ? id : null;
+  }
 
-    const preview: PreviewPost = {
-      id: "preview",
-      title,
-      category: null,
-      createdAt: Date.now(),
-      imageUrls: fileKeys.map((k) => `/api/files/${k}`), // TODO: 실제 URL 변환 로직 연결
-      priceKRW: negotiable ? 0 : Number(price || 0),
-      unit: negotiable ? null : (unit || "시간"),
-      timeNote: times.includes(TIME_AGREE) ? "시간대 협의" : times.join(", "),
-      paragraphs: [desc],
-      mentorTypes,
-      meetPref,
-      author: { name: "익명", age: "-", gender: "-" },
-    };
+  async function handleSubmit() {
+    if (!isValid || isSubmitting) return;
+    if (!category || !level || !mentorGender || !meetPref) {
+      alert("필수 항목을 모두 입력해주세요.");
+      return;
+    }
+    if (!negotiable && !unit) {
+      alert("가격 단위를 선택해주세요.");
+      return;
+    }
 
     try {
-      localStorage.setItem("postPreview", JSON.stringify(preview));
-    } catch {
-      // 로컬스토리지 실패해도 그냥 진행
-    }
-    router.push("/junior/post/preview");
+      setIsSubmitting(true);
 
-    // (옵션) 백엔드 연동은 나중에 이어붙이기
-    // void (async () => {
-    //   try {
-    //     await createJuniorPostAction(...);
-    //     // 성공하면 생성 id로 replace
-    //     // router.replace(`/junior/post/${newId}`);
-    //   } catch {}
-    // })();
+      const meRes = await fetch("/api/users/me", { cache: "no-store" });
+      const meJson = await meRes.json();
+      if (!meRes.ok || !meJson?.success) {
+        throw new Error(meJson?.message ?? "로그인이 필요합니다.");
+      }
+      const userId = meJson?.data?.id as string | undefined;
+      if (!userId) {
+        throw new Error("사용자 정보를 찾을 수 없습니다.");
+      }
+
+      const dayValue =
+        days.length === 0 || days.includes(DAY_AGREE) ? "요일 협의" : days.filter((d) => d !== DAY_AGREE);
+      const timeValue =
+        times.length === 0 || times.includes(TIME_AGREE)
+          ? "시간대 협의"
+          : times
+              .filter((t) => t !== TIME_AGREE)
+              .map((t) => TimeType[t as keyof typeof TimeType] ?? t);
+
+      const payload: RegisterJuniorReq & { userId: string } = {
+        userId,
+        category,
+        title,
+        content: desc,
+        level,
+        datesTimes: { day: dayValue, time: timeValue },
+        seniorType: mentorTypes,
+        classType: ClassType[meetPref],
+        budget: negotiable ? null : Number(price || 0),
+        budgetType: negotiable ? BudgetType["협의해요"] : BudgetType[unit ?? "시간"],
+        seniorGender: GenderType[mentorGender],
+        fileKeys,
+      };
+
+      const res = await fetch("/api/posts/junior", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.message ?? "게시글 생성에 실패했습니다.");
+      }
+
+      const postId = extractPostId(json?.data);
+      if (!postId) {
+        throw new Error("생성된 게시글 ID를 찾을 수 없습니다.");
+      }
+
+      router.replace(`/junior/post/${postId}`);
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "게시글 생성에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <>
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70">
-        <RegisterActionBar isValid={isValid} onSubmit={handleSubmit} brand={BRAND} />
+        <RegisterActionBar isValid={isValid && !isSubmitting} onSubmit={handleSubmit} brand={BRAND} />
       </div>
       <div className="px-4" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
 

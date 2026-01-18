@@ -99,6 +99,7 @@ export type GenderValue = (typeof GenderType)[GenderKey]; // "남자" | "여자"
 
 
 export interface RegisterJuniorReq {
+    category: string;
     title: string;
     content: string;
     level: LevelType;

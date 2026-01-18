@@ -4,7 +4,6 @@
 import React, { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-import Image from "next/image";
 import { Chip } from "@/components/common/Chip";
 
 const Brand = "#6163FF";
@@ -76,6 +75,22 @@ function formatKRW(n: number) {
 const SectionDivider = ({ className = "" }: { className?: string }) => (
   <div className={`border-t border-neutral-200 ${className}`} />
 );
+
+function buildFileUrl(key: string) {
+  const encoded = key
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `/api/files/${encoded}`;
+}
+
+function resolveImageUrl(value?: string | null) {
+  if (!value) return null;
+  if (value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/")) {
+    return value;
+  }
+  return buildFileUrl(value);
+}
 
 /* ---------- page ---------- */
 export default function Page() {
@@ -173,6 +188,10 @@ export default function Page() {
     );
   }
 
+  const heroImage =
+    resolveImageUrl(post.image_url_m) ??
+    (post.files?.[0]?.key ? buildFileUrl(post.files[0].key) : null);
+
   return (
     <div className="w-full flex justify-center">
       <div className="w-full max-w-[768px] min-h-screen bg-white">
@@ -187,17 +206,11 @@ export default function Page() {
           </button>
         </div>
 
-        {
-          post.image_url_m && post.image_url_m.length > 0 &&
+        {heroImage && (
           <div className="relative w-full h-[272px]">
-            <Image
-              src={post.image_url_m}
-              fill
-              alt="썸네일"
-              className="object-cover"
-            />
+            <img src={heroImage} alt="썸네일" className="h-full w-full object-cover" />
           </div>
-        }
+        )}
 
         {/* 본문 */}
         <div className="px-5">

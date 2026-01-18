@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createRouteSupabaseClient } from "@/lib/serverSupabase";
 import { generateDownloadUrl } from "@/services/s3";
 
 export async function GET(request: Request) {
@@ -11,6 +11,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    const supabase = await createRouteSupabaseClient();
     const { data: file, error } = await supabase
       .from("file")
       .select("bucket, original_file_name")
