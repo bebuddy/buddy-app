@@ -137,7 +137,7 @@ export default function WritePage() {
     return hasTitle && hasDesc && hasCategory && hasMeet && hasPrice;
   }, [title, desc, category, meetPref, price, negotiable]);
 
-  // 제출: 로컬 프리뷰 저장 후 /junior/post/preview 이동
+  // 제출: 로컬 프리뷰 저장 후 /junior/post?id=preview 이동
   async function handleSubmit() {
     if (!isValid) return;
 
@@ -146,7 +146,7 @@ export default function WritePage() {
       title,
       category: null,
       createdAt: Date.now(),
-      imageUrls: fileKeys.map((k) => `/api/files/${k}`), // TODO: 실제 URL 변환 로직 연결
+      imageUrls: fileKeys, // TODO: 다운로드용 서명 URL 생성으로 대체
       priceKRW: negotiable ? 0 : Number(price || 0),
       unit: negotiable ? null : (unit || "시간"),
       timeNote: times.includes(TIME_AGREE) ? "시간대 협의" : times.join(", "),
@@ -161,14 +161,14 @@ export default function WritePage() {
     } catch {
       // 로컬스토리지 실패해도 그냥 진행
     }
-    router.push("/junior/post/preview");
+    router.push("/junior/post?id=preview");
 
     // (옵션) 백엔드 연동은 나중에 이어붙이기
     // void (async () => {
     //   try {
     //     await createJuniorPostAction(...);
     //     // 성공하면 생성 id로 replace
-    //     // router.replace(`/junior/post/${newId}`);
+    //     // router.replace(`/junior/post?id=${newId}`);
     //   } catch {}
     // })();
   }

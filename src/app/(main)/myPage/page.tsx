@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Plus } from "lucide-react";
 import ChipGroup from "@/components/ChipGroup";
+import { supabase } from "@/lib/supabase";
 
 const ORANGE = "#FF843D";        // 칩/플러스 버튼 오렌지
 const PURPLE = "#6163FF";        // 알림 배지/테두리
@@ -54,51 +55,60 @@ export default function MyPage() {
 
   const [notificationCount, setNotificationCount] = useState<number>(0);
 
-  async function loadInterests() {
-    try {
-      const res = await fetch("/api/users/interests", { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.message ?? "관심사를 불러오지 못했습니다.");
-      const list = (json.data as string[] | undefined) ?? [];
-      setInterests(list as Interest[]);
-      setTempInterests(list as Interest[]);
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   useEffect(() => {
     let active = true;
     const fetchMe = async () => {
       try {
-        const res = await fetch("/api/users/me", { cache: "no-store" });
-        const json = await res.json();
-        if (!res.ok || !json?.success) throw new Error(json?.message ?? "내 정보를 불러오지 못했습니다.");
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData.user) {
+          router.replace("/sign-in");
+          return;
+        }
+        const userId = authData.user.id;
+
+        const [meRes, interestsRes, unreadRes] = await Promise.all([
+          supabase.from("users").select("*").eq("auth_id", userId).single(),
+          supabase.from("interest").select("value").eq("user_id", userId).order("created_at", { ascending: true }),
+          supabase
+            .from("user_notification")
+            .select("id", { count: "exact", head: true })
+            .eq("user_auth_id", userId)
+            .eq("is_read", false),
+        ]);
+
         if (!active) return;
-        const user = json.data as {
-          nick_name?: string | null;
-          introduction?: string | null;
-          location?: string | null;
-        };
-        setName(user.nick_name || "사용자");
-        setTagline(user.location || user.introduction || "프로필을 업데이트해주세요");
-        // TODO: 관심사 컬럼이 생기면 여기서 setInterests에 반영
+        if (meRes.data) {
+          const user = meRes.data as {
+            nick_name?: string | null;
+            introduction?: string | null;
+            location?: string | null;
+          };
+          setName(user.nick_name || "사용자");
+          setTagline(user.location || user.introduction || "프로필을 업데이트해주세요");
+        }
+
+        if (!meRes.data && meRes.error) {
+          console.error("user fetch error", meRes.error);
+        }
+
+        const list = ((interestsRes.data ?? []).map((row) => row.value) as Interest[]) ?? [];
+        setInterests(list);
+        setTempInterests(list);
+
+        if (interestsRes.error) {
+          console.error("interest fetch error", interestsRes.error);
+        }
+
+        if (unreadRes.error) {
+          console.error("unread count error", unreadRes.error);
+        } else {
+          setNotificationCount(Number(unreadRes.count ?? 0));
+        }
       } catch (error) {
         console.error(error);
       }
     };
     void fetchMe();
-    void loadInterests();
-    void (async () => {
-      try {
-        const res = await fetch("/api/notifications/unread-count", { cache: "no-store" });
-        const json = await res.json();
-        if (!res.ok || !json?.success) throw new Error(json?.message ?? "알림을 불러오지 못했습니다.");
-        setNotificationCount(Number(json.data?.unreadCount ?? 0));
-      } catch (error) {
-        console.error(error);
-      }
-    })();
     return () => {
       active = false;
     };
@@ -278,14 +288,28 @@ export default function MyPage() {
                 onClick={() => {
                     void (async () => {
                         try {
-                            const res = await fetch("/api/users/interests", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ values: tempInterests }),
-                            });
-                            const json = await res.json();
-                            if (!res.ok || !json?.success) throw new Error(json?.message ?? "관심사 저장 실패");
-                            setInterests(json.data as Interest[]);
+                            const { data: authData, error: authError } = await supabase.auth.getUser();
+                            if (authError || !authData.user) {
+                                router.replace("/sign-in");
+                                return;
+                            }
+                            const userId = authData.user.id;
+
+                            const { error: deleteError } = await supabase.from("interest").delete().eq("user_id", userId);
+                            if (deleteError) throw deleteError;
+
+                            if (tempInterests.length === 0) {
+                                setInterests([]);
+                                return;
+                            }
+
+                            const { data, error } = await supabase
+                                .from("interest")
+                                .insert(tempInterests.map((value) => ({ user_id: userId, value })))
+                                .select("value");
+                            if (error) throw error;
+                            const saved = (data ?? []).map((row) => row.value as Interest);
+                            setInterests(saved);
                         } catch (error) {
                             console.error(error);
                             alert("관심사 저장에 실패했습니다.");

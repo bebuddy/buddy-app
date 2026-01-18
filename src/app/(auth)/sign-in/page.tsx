@@ -2,17 +2,38 @@
 
 import React from "react";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
+
+const NATIVE_REDIRECT_URL = "buddyapp://auth/callback";
 
 export default function SigninPage() {
-    // ✅ Google 로그인 함수 (Route Handler 경유)
-    const handleGoogleSignin = async () => {
-        try {
-            window.location.href = "/api/auth/login?provider=google";
-        } catch (error) {
-            console.error("Google login error:", error);
-            alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
-        }
-    };
+  // Google 로그인 함수 (클라이언트에서 직접 Supabase 호출)
+  const handleGoogleSignin = async () => {
+    try {
+      const isNative = Capacitor.isNativePlatform();
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const redirectTo = isNative ? NATIVE_REDIRECT_URL : `${origin}/verify`;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error || !data?.url) throw error ?? new Error("리다이렉트 URL을 받지 못했습니다.");
+      if (isNative) {
+        await Browser.open({ url: data.url });
+      } else {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+    }
+  };
 
     return (
         <>
@@ -31,7 +52,7 @@ export default function SigninPage() {
                     <span>재밌게 행복하게 시작해보세요!</span>
                 </div>
 
-                {/* ✅ Google 로그인 버튼 */}
+                {/* Google 로그인 버튼 */}
                 <button
                     onClick={handleGoogleSignin}
                     className="flex items-center justify-center gap-2 border border-gray-300 px-8 py-4 rounded-xl hover:bg-gray-100 active:bg-gray-100"

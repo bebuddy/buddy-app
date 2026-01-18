@@ -28,7 +28,11 @@ export default function ChipGroup<T extends string>({
 
     if (multiple) {
       const next = new Set(selectedSet);
-      next.has(opt) ? next.delete(opt) : next.add(opt);
+      if (next.has(opt)) {
+        next.delete(opt);
+      } else {
+        next.add(opt);
+      }
       onChange(Array.from(next) as T[]);
     } else {
       onChange(selectedSet.has(opt) ? null : (opt as T));

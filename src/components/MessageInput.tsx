@@ -36,8 +36,21 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
   return (
     <div className="flex items-center p-4 bg-white sticky bottom-0">
       {/* '+' 버튼 (임시 아이콘) */}
-      <button className="mr-3 p-2 text-gray-500 hover:text-gray-700">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <button
+        className="mr-3 p-2 text-gray-500 hover:text-gray-700"
+        type="button"
+        aria-label="추가 옵션"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+          focusable="false"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
       </button>
@@ -49,6 +62,7 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown} // 수정된 핸들러 연결
         placeholder="메시지를 입력하세요."
+        aria-label="메시지 입력"
         className="flex-1 px-4 py-2 bg-gray-100 rounded-full mr-2 focus:outline-none focus:ring-1 focus:ring-gray-300 text-gray-800"
       />
       
@@ -56,6 +70,9 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
       <button
         onClick={handleSend}
         disabled={isInputEmpty}
+        aria-disabled={isInputEmpty}
+        aria-label="메시지 전송"
+        type="button"
         className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors
           ${isInputEmpty
             ? 'bg-gray-300 text-gray-500' // 비활성화
@@ -64,7 +81,15 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
         `}
       >
         {/* ★ 위쪽 화살표(arrow_upward) SVG로 변경 */}
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" stroke="none">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          stroke="none"
+          aria-hidden="true"
+          focusable="false"
+        >
           <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z"/>
         </svg>
       </button>

@@ -1,34 +1,38 @@
+// Client-only layout gate to avoid server dependency during static export
+"use client";
+
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
-import type { User } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-export const dynamic = "force-dynamic";
+export default function MainLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
 
-async function getUser(): Promise<User | null> {
-  const cookieStore = await cookies();
+  useEffect(() => {
+    const ensureSession = async () => {
+      try {
+        if (typeof supabase.auth?.getSession !== "function") {
+          router.replace("/sign-in");
+          return;
+        }
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data.session) {
+          router.replace("/sign-in");
+          return;
+        }
+        setReady(true);
+      } catch {
+        router.replace("/sign-in");
+      }
+    };
+    void ensureSession();
+  }, [router]);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_KEY as string,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
-  );
-
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
-  return data.user;
-}
-
-export default async function MainLayout({ children }: { children: ReactNode }) {
-  const user = await getUser();
-  if (!user) redirect("/sign-in");
+  if (!ready) {
+    return <div className="flex min-h-screen items-center justify-center text-neutral-600">로그인 확인 중...</div>;
+  }
 
   return <>{children}</>;
 }

@@ -10,15 +10,20 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     ignores: [
       "node_modules/**",
       ".next/**",
       "out/**",
       "build/**",
+      "android/**",
+      "ios/**",
       "next-env.d.ts",
+      "supabase/**",
     ],
+  },
+  ...compat.extends("next/core-web-vitals", "next/typescript", "plugin:jsx-a11y/recommended"),
+  {
     rules: {
       "@typescript-eslint/no-unused-vars": "off", 
       "react/jsx-key": "off",

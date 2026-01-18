@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import AlarmItem from "@/components/AlarmItem"; // 방금 만든 컴포넌트
+import { supabase } from "@/lib/supabase";
 
 type NotificationItem = {
   id: string;
@@ -25,6 +26,7 @@ export default function AlarmPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const cursorRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -35,23 +37,66 @@ export default function AlarmPage() {
       setIsFetchingMore(true);
     }
     try {
-      const params = new URLSearchParams();
-      if (cursorRef.current) params.set("cursor", cursorRef.current);
-      params.set("limit", "20");
+      let uid = userId;
+      if (!uid) {
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData.user) {
+          router.replace("/sign-in");
+          return;
+        }
+        uid = authData.user.id;
+        setUserId(uid);
+      }
 
-      const res = await fetch(`/api/notifications?${params.toString()}`, { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.message ?? "알림을 불러오지 못했습니다.");
+      const limit = 20;
+      let query = supabase
+        .from("user_notification")
+        .select(
+          `
+          id,
+          is_read,
+          created_at,
+          notification:notification_id (
+            id,
+            title,
+            content,
+            action_url,
+            data,
+            notification_type,
+            created_at
+          )
+        `
+        )
+        .eq("user_auth_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(limit + 1);
 
-      const { items, nextCursor, hasMore: more } = json.data as {
-        items: NotificationItem[];
-        nextCursor: string | null;
-        hasMore: boolean;
-      };
+      if (cursorRef.current) {
+        query = query.lt("created_at", cursorRef.current);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const hasMoreRows = (data?.length ?? 0) > limit;
+      const items = (data ?? []).slice(0, limit).map((row: any) => ({
+        id: row.id,
+        isRead: row.is_read,
+        createdAt: row.created_at,
+        notificationId: row.notification?.id,
+        title: row.notification?.title,
+        content: row.notification?.content,
+        actionUrl: row.notification?.action_url,
+        data: row.notification?.data,
+        type: row.notification?.notification_type,
+        sentAt: row.notification?.created_at,
+      })) as NotificationItem[];
+
+      const nextCursor = hasMoreRows ? items[items.length - 1]?.createdAt ?? null : null;
 
       setAlarms((prev) => (initial ? items : [...prev, ...items]));
       cursorRef.current = nextCursor;
-      setHasMore(Boolean(more));
+      setHasMore(Boolean(hasMoreRows));
     } catch (error) {
       console.error(error);
     } finally {
@@ -67,13 +112,20 @@ export default function AlarmPage() {
   // 2. 알림 클릭 시 '읽음' 처리 (상태 업데이트)
   const handleMarkAsRead = async (id: string) => {
     try {
-      const res = await fetch("/api/notifications/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.message ?? "읽음 처리 실패");
+      let uid = userId;
+      if (!uid) {
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData.user) throw authError ?? new Error("로그인이 필요합니다.");
+        uid = authData.user.id;
+        setUserId(uid);
+      }
+
+      const { error } = await supabase
+        .from("user_notification")
+        .update({ is_read: true })
+        .eq("id", id)
+        .eq("user_auth_id", uid);
+      if (error) throw error;
       setAlarms((prevAlarms) =>
         prevAlarms.map((alarm) =>
           alarm.id === id ? { ...alarm, isRead: true } : alarm

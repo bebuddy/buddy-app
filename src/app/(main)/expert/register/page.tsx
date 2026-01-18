@@ -113,7 +113,7 @@ export default function ExpertRegisterPage() {
       title,
       category: null as string | null,
       createdAt: Date.now(),
-      imageUrls: fileKeys.map(k => `/api/files/${k}`), // presigned redirect 라우트 사용
+      imageUrls: fileKeys, // 실제 표시 시에는 다운로드용 서명 URL을 생성하세요
       priceKRW: negotiable ? 0 : Number(price || 0),
       unit: negotiable ? null : (unit || "시간"),
       timeNote: times.includes("시간대 협의") ? "시간대 협의" : times.join(", "),
@@ -127,7 +127,7 @@ export default function ExpertRegisterPage() {
     try {
       localStorage.setItem("postPreview", JSON.stringify(preview));
     } catch { }
-    router.push("/expert/post/preview");
+    router.push("/expert/post?id=preview");
 
     // 3) (선택) 백엔드 호출은 비동기로 시도 — 화면 전환과 무관
     void (async () => {

@@ -42,7 +42,7 @@ import {
     notificationType: "COMMENT", // DTO Enum 오타 수정 (COMMNET -> COMMENT 가정)
     title: "새로운 댓글",
     content: "“고수는 아니지만 연락주세요!”",
-    actionUrl: "/expert/post/123", // 예시 링크
+    actionUrl: "/expert/post?id=123", // 예시 링크
     elapsedCreatedDate: "2일전",
     sender: MOCK_SENDER,
     // ... DTO 나머지 필드
@@ -59,7 +59,7 @@ import {
     notificationType: "COMMENT",
     title: "새로운 댓글",
     content: "“주말 오후에 잠시 도와드릴 수 있을 것 같아요~”",
-    actionUrl: "/junior/post/456",
+    actionUrl: "/junior/post?id=456",
     elapsedCreatedDate: "2일전",
     sender: MOCK_SENDER,
     // ... DTO 나머지 필드
@@ -76,7 +76,7 @@ import {
     notificationType: "COMMENT",
     title: "새로운 댓글",
     content: "“멋지네요 ㅎㅎ”",
-    actionUrl: "/expert/post/123",
+    actionUrl: "/expert/post?id=123",
     elapsedCreatedDate: "2일전",
     sender: MOCK_SENDER,
     // ... DTO 나머지 필드

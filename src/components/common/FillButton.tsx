@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import AppButton from "@/components/a11y/AppButton";
 
 type Props = {
   name: string;
@@ -9,9 +9,10 @@ type Props = {
 
 export default function FillButton({ name, onClick, isLoading = false, disabled }: Props) {
   return (
-    <button
+    <AppButton
       onClick={onClick}
       disabled={isLoading || disabled}
+      aria-busy={isLoading || undefined}
       className={`
         relative flex justify-center items-center
         bg-secondary-500 text-white rounded-[6px] w-full py-3 text-medium-18
@@ -27,6 +28,6 @@ export default function FillButton({ name, onClick, isLoading = false, disabled 
       ) : (
         name
       )}
-    </button>
+    </AppButton>
   );
 }

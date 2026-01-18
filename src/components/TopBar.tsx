@@ -17,13 +17,17 @@ export default function TopBar({ showLocation = true }: TopBarProps) {
   const router = useRouter();
   const { dong, setDong } = useSelectedDong();
 
-  // 최초 마운트 시, sign-up에서 저장한 로컬 스토리지 값으로 기본 동 세팅
-  // localStorage: ob.basic = { dong, age, gender, name, role, ... }
+  // 최초 마운트 시, 로컬 스토리지 값으로 기본 동 세팅
+  // localStorage: selectedDong 또는 ob.basic = { dong, age, gender, name, role, ... }
   useEffect(() => {
     if (dong) return;
-    if (typeof window === "undefined") return;
-
     try {
+      const fromSelected = localStorage.getItem("selectedDong");
+      if (fromSelected) {
+        setDong(fromSelected);
+        return;
+      }
+
       const raw = localStorage.getItem("ob.basic");
       if (!raw) return;
       const parsed = JSON.parse(raw);

@@ -31,12 +31,24 @@ export default function MasterCard({
 
   const ageLabel = getKDecadeLabel(item.birth_date);
   const displayName = item.nick_name || item.name || "선배";
+  const handleOpen = () => {
+    router.push(`/expert/post?id=${encodeURIComponent(item.id)}`);
+  };
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleOpen();
+    }
+  };
 
   return (
     <div
       className="rounded-2xl border border-neutral-200 shadow-sm overflow-hidden bg-white"
-      onClick={() => router.push(`/expert/post/${item.id}`)}
+      onClick={handleOpen}
+      onKeyDown={handleKeyDown}
       role="button"
+      tabIndex={0}
+      aria-label={`${displayName} 상세 보기`}
     >
       {/* 이미지 영역 */}
       <div

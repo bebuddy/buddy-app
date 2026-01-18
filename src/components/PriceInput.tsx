@@ -12,6 +12,12 @@ export default function PriceInput({
   negotiable,
   onToggleNegotiable,
   brand = "#33AF83",
+  label = "수업비",
+  showLabel = false,
+  description,
+  error,
+  inputAriaLabel = "금액 입력",
+  unitLabel = "요금 단위",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -20,8 +26,18 @@ export default function PriceInput({
   negotiable: boolean;
   onToggleNegotiable: () => void;
   brand?: string;
+  label?: string;
+  showLabel?: boolean;
+  description?: string;
+  error?: string;
+  inputAriaLabel?: string;
+  unitLabel?: string;
 }) {
   const checkboxId = useId();
+  const inputId = useId();
+  const descriptionId = description ? `${inputId}-description` : undefined;
+  const errorId = error ? `${inputId}-error` : undefined;
+  const describedBy = [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
   const disabled = negotiable;
 
   function handleChange(v: string) {
@@ -30,9 +46,23 @@ export default function PriceInput({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <fieldset className="flex flex-col gap-3">
+      <legend className={showLabel ? "text-[18px] font-semibold text-neutral-900" : "sr-only"}>
+        {label}
+      </legend>
+      {description ? (
+        <p id={descriptionId} className="text-[14px] text-neutral-600">
+          {description}
+        </p>
+      ) : null}
+      {error ? (
+        <p id={errorId} className="text-[14px] text-red-600" role="status" aria-live="polite">
+          {error}
+        </p>
+      ) : null}
+
       {/* 시간/건당 칩 */}
-      <div className="flex gap-2">
+      <div className="flex gap-2" role="radiogroup" aria-label={unitLabel}>
         {UNITS.map((u) => {
           const selected = unit === u;
           const active = selected && !disabled;
@@ -40,6 +70,8 @@ export default function PriceInput({
             <button
               key={u}
               type="button"
+              role="radio"
+              aria-checked={selected}
               onClick={() => !disabled && onUnitChange(selected ? null : u)}
               disabled={disabled}
               aria-disabled={disabled}
@@ -61,11 +93,15 @@ export default function PriceInput({
       {/* 숫자 입력 + '원' */}
       <div className="relative">
         <input
+          id={inputId}
           inputMode="numeric"
           pattern="[0-9]*"
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           disabled={disabled}
+          aria-label={inputAriaLabel}
+          aria-describedby={describedBy}
+          aria-invalid={error ? "true" : undefined}
           className={`w-full rounded-lg border border-neutral-300 px-4 pr-12 py-3.5 text-[17px] outline-none focus:border-neutral-400 ${
             disabled ? "bg-neutral-100 cursor-not-allowed opacity-60" : "bg-white"
           }`}
@@ -87,6 +123,6 @@ export default function PriceInput({
         />
         <span className="text-[16px] text-neutral-900">협의해요</span>
       </label>
-    </div>
+    </fieldset>
   );
 }

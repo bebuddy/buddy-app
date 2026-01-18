@@ -9,8 +9,21 @@ export default function VerifyPage() {
 
   useEffect(() => {
     const verify = async () => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          alert("로그인 세션을 생성하지 못했습니다. 다시 시도해주세요.");
+          router.push("/sign-in");
+          return;
+        }
+        url.searchParams.delete("code");
+        window.history.replaceState({}, "", url.toString());
+      }
+
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) return router.push("/signin");
+      if (error || !user) return router.push("/sign-in");
 
       const authId = user.id;
 

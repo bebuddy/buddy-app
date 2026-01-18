@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Supabase setup (static-friendly)
 
-## Getting Started
+1) Create a Supabase project and note the project URL and anon key.  
+2) Set env vars in `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# S3 for edge uploads/downloads
+S3_REGION=<aws-region>
+S3_BUCKET=<bucket-name>
+AWS_ACCESS_KEY_ID=<access-key>
+AWS_SECRET_ACCESS_KEY=<secret>
+# Optional: bucket name for UI hints
+NEXT_PUBLIC_S3_BUCKET_NAME=<bucket-name>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3) Apply RLS/policies (in the Supabase SQL editor or with the CLI):
+```
+supabase db execute --file supabase/migrations/0001_rls.sql
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4) Deploy edge functions (requires `supabase` CLI and project ref):
+```
+supabase functions deploy file-upload-url --project-ref <project-ref>
+supabase functions deploy file-download-url --project-ref <project-ref>
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Set function secrets (same values as your env)
+supabase secrets set SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+  S3_REGION=$S3_REGION S3_BUCKET=$S3_BUCKET AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  --project-ref <project-ref>
+```
 
-## Learn More
+5) Install deps and run locally:
+```
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Expected behavior after migration
+- Auth: client uses `supabase.auth.signInWithOAuth` and `/verify` exchanges the code.  
+- Data: app pages query Supabase directly; RLS protects per-user data.  
+- Files: uploads/download URLs are issued by Supabase Edge Functions; file metadata is written client-side via RLS.  
+- No Next.js API routes are used at runtime (static export ready).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Native build (Capacitor)
+- Build web + sync native projects: `npm run build:native` (runs `next build` to `out/` then `npx cap sync`).
+- Open platforms: `npm run ios` (Xcode) / `npm run android` (Android Studio).
+- Sync only after asset/code changes: `npm run cap:sync`.
+- Capacitor reads from `out/`; keep server-side logic in Supabase/Edge Functions so the static export stays valid.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Optional live reload (dev only)
+- Run `npm run dev`.
+- Temporarily set `server.url` in `capacitor.config.ts` to `http://<your-local-ip>:3000` and add `cleartext: true` if using HTTP (Android); remove these once done.
+- `npx cap sync` then `npm run ios` / `npm run android`; the native shell will proxy to the dev server.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Static-export caveats
+- Next.js is set to `output: "export"` with `images.unoptimized: true`.
+- Dynamic expert post paths are pre-rendered via `generateStaticParams`; set `EXPERT_POST_IDS=comma,separated,ids` in your env to include real post IDs. If unset, a placeholder path `/expert/post/example` is generated.

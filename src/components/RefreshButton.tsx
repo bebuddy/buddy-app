@@ -1,6 +1,6 @@
 "use client";
-import Image from 'next/image'
-import RefreshIcon from '@/assets/icon/RefreshIcon.svg';
+import Image from "next/image";
+import RefreshIcon from "@/assets/icon/RefreshIcon.svg";
 
 
 type Props = {
@@ -15,8 +15,6 @@ export default function RefreshButton({ onClick, size = "md", className = "" }: 
       ? "font-medium-18 px-6 py-2 gap-1"
       : "font-medium-18 px-6 py-2 gap-2";
 
-  const iconSize = size === "sm" ? 16 : 18;
-
   return (
     <button
       onClick={onClick}
@@ -30,7 +28,8 @@ export default function RefreshButton({ onClick, size = "md", className = "" }: 
         width={20}
         height={20}
         className="text-white"
-        alt="Button"
+        alt=""
+        aria-hidden="true"
       />
     </button>
   );

@@ -15,11 +15,23 @@ export default function PostCard({
   brand?: string;
 }) {
   const router = useRouter();
+  const handleOpen = () => {
+    router.push(`/junior/post?id=${encodeURIComponent(item.id)}`);
+  };
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleOpen();
+    }
+  };
   return (
     <div
       className="card p-4"
       role="button"
-      onClick={() => router.push(`/junior/post/${item.id}`)} // 경로 수정
+      tabIndex={0}
+      onClick={handleOpen} // 경로 수정
+      onKeyDown={handleKeyDown}
+      aria-label={`${item.title} 상세 보기`}
     >
       {/* 상단: 카테고리 칩 / 저장 버튼 */}
       <div className="flex items-center justify-between">

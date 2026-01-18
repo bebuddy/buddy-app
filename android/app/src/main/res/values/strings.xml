@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BuddyApp</string>
+    <string name="title_activity_main">BuddyApp</string>
+    <string name="package_name">com.kkanbu.buddy</string>
+    <string name="custom_url_scheme">com.kkanbu.buddy</string>
+</resources>

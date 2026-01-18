@@ -139,7 +139,7 @@ export default function OnboardingJuniorPage() {
     };
 
     try { localStorage.setItem("postPreview", JSON.stringify(preview)); } catch {}
-    router.push("/junior/post/preview");
+    router.push("/junior/post?id=preview");
   }
 
   function back() {

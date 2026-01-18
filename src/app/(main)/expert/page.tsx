@@ -10,8 +10,10 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNav from "@/components/BottomNav";
 import RefreshButton from "@/components/RefreshButton";
 import WriteButton from "@/components/WriteButton";
+import { supabase } from "@/lib/supabase";
 
 const BRAND = "#6163FF";
+const FLOATING_BUTTON_OFFSET = "calc(env(safe-area-inset-bottom) + 108px)";
 
 export type SeniorItem = {
   id: string;
@@ -35,18 +37,17 @@ export default function ExpertPage() {
   async function refreshItemList() {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/posts/senior?count=20", { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 불러오지 못했습니다.");
-      const mapped: SeniorItem[] = (json.data ?? []).map((row: SeniorItem) => ({
+      const { data, error } = await supabase.rpc("getseniorpostsbyrandom", { _count: 20 });
+      if (error) throw error;
+      const mapped: SeniorItem[] = (data ?? []).map((row: SeniorItem) => ({
         id: row.id,
         category: row.category,
         title: row.title,
-        location: row.location,
-        birth_date: row.birth_date,
-        image_url_l: row.image_url_l,
-        nick_name: row.nick_name,
-        name: row.name,
+        location: (row as any).location,
+        birth_date: (row as any).birth_date,
+        image_url_l: (row as any).image_url_l,
+        nick_name: (row as any).nick_name,
+        name: (row as any).name,
       }));
       setItems(mapped);
     } catch (e) {
@@ -91,13 +92,11 @@ export default function ExpertPage() {
 
       {/* 등록하기 버튼 - floating */}
       <div
-        className="fixed left-0 right-0 pointer-events-none"
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 130px)" }}
+        className="fixed left-1/2 -translate-x-1/2 w-full max-w-[768px] px-4 flex justify-end z-[1800] pointer-events-none"
+        style={{ bottom: FLOATING_BUTTON_OFFSET }}
       >
-        <div className="mx-auto max-w-[768px] px-4 flex justify-end">
-          <div className="pointer-events-auto">
-            <WriteButton onClick={() => router.push("/expert/register")} name={"등록하기"} bgColor={"primary"} />
-          </div>
+        <div className="pointer-events-auto">
+          <WriteButton onClick={() => router.push("/expert/register")} name={"등록하기"} bgColor={"primary"} />
         </div>
       </div>
       <BottomNav />

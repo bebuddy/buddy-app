@@ -44,7 +44,9 @@ export default function SaveButton({ itemId }: { itemId: string }) {
     <button
       onClick={toggleSave}
       aria-label={isSaved ? "저장 취소" : "저장"}
-      className="p-1" // 클릭 영역 확보
+      aria-pressed={isSaved}
+      type="button"
+      className="p-1 min-h-[44px] min-w-[44px]" // 클릭 영역 확보
     >
       <svg
         width="28"
@@ -52,6 +54,8 @@ export default function SaveButton({ itemId }: { itemId: string }) {
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        focusable="false"
       >
         <path
           d="M5 21V5C5 4.46957 5.21071 3.96086 5.58579 3.58579C5.96086 3.21071 6.46957 3 7 3H17C17.5304 3 18.0391 3.21071 18.4142 3.58579C18.7893 3.96086 19 4.46957 19 5V21L12 18L5 21Z"

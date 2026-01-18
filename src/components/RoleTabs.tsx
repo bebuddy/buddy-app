@@ -25,9 +25,11 @@ export default function RoleTabs({ labels }: Props) {
   const inactiveClasses = "text-neutral-400 font-bold-18";
 
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-4" role="group" aria-label="역할 선택">
       <button
         aria-current={active === "junior" ? "page" : undefined}
+        aria-pressed={active === "junior"}
+        type="button"
         className={`${base} ${active === "junior" ? activeClasses : inactiveClasses}`}
         onClick={() => router.push("/junior")}
       >
@@ -35,6 +37,8 @@ export default function RoleTabs({ labels }: Props) {
       </button>
       <button
         aria-current={active === "senior" ? "page" : undefined}
+        aria-pressed={active === "senior"}
+        type="button"
         className={`${base} ${active === "senior" ? activeClasses : inactiveClasses}`}
         onClick={() => router.push("/expert")}
       >

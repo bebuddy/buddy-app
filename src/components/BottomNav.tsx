@@ -18,6 +18,7 @@ export default function BottomNav() {
     <nav
       className="bg-white fixed z-[1900] left-1/2 -translate-x-1/2 w-full max-w-[768px] pointer-events-none py-4"
       style={{ bottom: "env(safe-area-inset-bottom)", boxShadow: '0px -2px 19px rgba(0,0,0,0.04)' }}
+      aria-label="하단 내비게이션"
     >
       {/* 안쪽: 실제 바 */}
       <div className="pointer-events-auto h-[64px] bg-white flex items-center justify-around">
@@ -27,6 +28,7 @@ export default function BottomNav() {
             active === "recommend" ? "font-extrabold text-neutral-900" : "text-neutral-500"
           }`}
           aria-current={active === "recommend" ? "page" : undefined}
+          type="button"
           onClick={() => router.push("/junior")}
         >
           <div
@@ -43,6 +45,7 @@ export default function BottomNav() {
             active === "chat" ? "font-extrabold text-neutral-900" : "text-neutral-500"
           }`}
           aria-current={active === "chat" ? "page" : undefined}
+          type="button"
           onClick={() => router.push("/chat")}
         >
           <div

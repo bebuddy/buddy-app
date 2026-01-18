@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 type DisclosureProps = {
   title: string;
@@ -10,11 +10,15 @@ type DisclosureProps = {
 
 export default function Disclosure({ title, summary, children }: DisclosureProps) {
   const [open, setOpen] = useState(false);
+  const contentId = useId();
 
   return (
     <div className="border-b border-neutral-200 py-3">
       <button
         className="w-full flex items-center justify-between text-left"
+        type="button"
+        aria-expanded={open}
+        aria-controls={contentId}
         onClick={() => setOpen((v) => !v)}
       >
         {/* ✅ summary가 있으면 그걸 보여주고, 없으면 title 보여주기 */}
@@ -33,7 +37,11 @@ export default function Disclosure({ title, summary, children }: DisclosureProps
         </span>
       </button>
 
-      {open && <div className="pt-3">{children}</div>}
+      {open && (
+        <div id={contentId} className="pt-3">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

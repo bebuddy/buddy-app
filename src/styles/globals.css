@@ -1,3 +1,12 @@
+@import "@ionic/react/css/core.css" layer(base);
+@import "@ionic/react/css/normalize.css" layer(base);
+@import "@ionic/react/css/structure.css" layer(base);
+@import "@ionic/react/css/typography.css" layer(base);
+@import "@ionic/react/css/padding.css" layer(base);
+@import "@ionic/react/css/text-alignment.css" layer(base);
+@import "@ionic/react/css/text-transformation.css" layer(base);
+@import "@ionic/react/css/flex-utils.css" layer(base);
+@import "@ionic/react/css/display.css" layer(base);
 @import "tailwindcss";
 
 /* ======================================
@@ -7,6 +16,20 @@
   html {
     font-family: "Noto Sans KR", sans-serif;
     font-size: 18px;
+  }
+
+  html,
+  body {
+    position: static;
+    height: auto;
+    min-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+  }
+
+  body {
+    touch-action: pan-y;
   }
 
   @media (min-width: 480px) {
@@ -19,6 +42,11 @@
 
   button {
     touch-action: manipulation;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
   }
 }
 
@@ -79,6 +107,8 @@
 
   /* BRAND */
   --color-brand: #6163ff;
+  --color-on-primary: #333333;
+  --color-on-secondary: #ffffff;
 }
 
 /* ======================================

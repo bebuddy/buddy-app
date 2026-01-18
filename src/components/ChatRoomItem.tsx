@@ -17,14 +17,15 @@ export default function ChatRoomItem({ room }: ChatRoomItemProps) {
   const lastMessageTime = room.lastMessage?.elapsedCreatedDate || "";
   const postTitle = room.postSummary?.title;
   const postType = room.postSummary?.type === "senior" ? "선배" : room.postSummary?.type === "junior" ? "후배" : null;
+  const roomUrl = `/chat/room?roomUuid=${encodeURIComponent(room.uuid)}`;
   const postUrl = room.postSummary
     ? room.postSummary.type === "senior"
-      ? `/expert/post/${room.postSummary.id}`
-      : `/junior/post/${room.postSummary.id}`
+      ? `/expert/post?id=${encodeURIComponent(room.postSummary.id)}`
+      : `/junior/post?id=${encodeURIComponent(room.postSummary.id)}`
     : null;
 
   return (
-    <Link href={`/chat/${room.uuid}`} className="flex items-center py-3 px-1 hover:bg-gray-50 transition-colors">
+    <Link href={roomUrl} className="flex items-center py-3 px-1 hover:bg-gray-50 transition-colors">
       {/* 1. 프로필 (ChatHeader와 동일한 로직, 크기 조정) */}
       <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center mr-4">
         <span className="text-gray-600 font-semibold text-lg">

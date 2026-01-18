@@ -16,11 +16,13 @@ const TABS: { key: ChatTabType; label: string }[] = [
 
 export default function ChatTabs({ activeTab, onTabChange }: ChatTabsProps) {
   return (
-    <nav className="flex space-x-2 mt-4 mb-4"> {/* space-x-4에서 space-x-2로 변경 */}
+    <nav className="flex space-x-2 mt-4 mb-4" aria-label="채팅 필터">
       {TABS.map((tab) => (
         <button
           key={tab.key}
           onClick={() => onTabChange(tab.key)}
+          type="button"
+          aria-pressed={activeTab === tab.key}
           className={`px-4 py-2 rounded-full font-semibold transition-colors
             ${
               activeTab === tab.key

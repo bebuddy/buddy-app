@@ -133,7 +133,7 @@ export default function OnboardingExpertPage() {
     try { localStorage.setItem("postPreview", JSON.stringify(preview)); } catch {}
     // TODO: 서버 저장 예시
     // await fetch("/api/posts/draft", { method: "POST", body: JSON.stringify(preview) })
-    router.push("/expert/post/preview");
+    router.push("/expert/post?id=preview");
   }
   function back() {
     if (step === 0) return setPhase("ask");

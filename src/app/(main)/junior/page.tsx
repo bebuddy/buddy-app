@@ -10,7 +10,9 @@ import PostCard from "@/components/PostCard";
 import RefreshButton from "@/components/RefreshButton";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNav from "@/components/BottomNav";
+import { supabase } from "@/lib/supabase";
 const BRAND = "#6163FF";
+const FLOATING_BUTTON_OFFSET = "calc(env(safe-area-inset-bottom) + 108px)";
 
 export type Item = {
   id: string;
@@ -31,16 +33,15 @@ export default function Page() {
   async function refreshItemList() {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/posts/junior?count=20", { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 불러오지 못했습니다.");
-      const mapped: Item[] = (json.data ?? []).map((row: Item & { image_url_m?: string | null; updated_at?: string | null }) => ({
+      const { data, error } = await supabase.rpc("getjuniorpostsbyrandom", { _count: 20 });
+      if (error) throw error;
+      const mapped: Item[] = (data ?? []).map((row: Item & { image_url_m?: string | null; updated_at?: string | null }) => ({
         id: row.id,
         category: row.category,
         title: row.title,
         content: row.content,
-        imageUrlM: row.image_url_m,
-        updatedAt: row.updated_at,
+        imageUrlM: (row as any).image_url_m,
+        updatedAt: (row as any).updated_at,
       }));
       setItems(mapped);
     } catch (e) {
@@ -87,13 +88,11 @@ export default function Page() {
 
       {/* 글쓰기 버튼 - floating */}
       <div
-        className="fixed left-0 right-0 pointer-events-none"
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 130px)" }}
+        className="fixed left-1/2 -translate-x-1/2 w-full max-w-[768px] px-4 flex justify-end z-[1800] pointer-events-none"
+        style={{ bottom: FLOATING_BUTTON_OFFSET }}
       >
-        <div className="mx-auto max-w-[768px] px-4 flex justify-end">
-          <div className="pointer-events-auto">
-            <WriteButton onClick={() => router.push("/junior/register")} name={"글쓰기"} bgColor={"secondary"} />
-          </div>
+        <div className="pointer-events-auto">
+          <WriteButton onClick={() => router.push("/junior/register")} name={"글쓰기"} bgColor={"secondary"} />
         </div>
       </div>
 

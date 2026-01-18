@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 interface PhotoUploadProps {
   brand?: string;
@@ -48,28 +49,28 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
   async function handleUpload(targets: PreviewItem[]) {
     if (!targets.length) return;
 
-    const bucket = process.env.NEXT_PUBLIC_S3_BUCKET_NAME!;
     setIsUploading(true);
 
     try {
+      const { data: authData, error: userError } = await supabase.auth.getUser();
+      if (userError || !authData.user) {
+        throw new Error("로그인이 필요합니다.");
+      }
       // S3 업로드
-      const uploadedFiles: { key: string; name: string; size: number; _id: string }[] = [];
+      const uploadedFiles: { key: string; name: string; size: number; _id: string; bucket?: string }[] = [];
 
       await Promise.all(
         targets.map(async (item) => {
           const file = item.file;
 
           // presigned URL 발급
-          const uploadReq = await fetch("/api/files/upload-url", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bucket, fileName: file.name }),
+          const { data: uploadData, error: uploadError } = await supabase.functions.invoke("file-upload-url", {
+            body: { fileName: file.name },
           });
-          const uploadRes = await uploadReq.json();
-          if (!uploadReq.ok || !uploadRes?.success) {
-            throw new Error(uploadRes?.message ?? "업로드 URL 발급 실패");
+          if (uploadError || !uploadData?.uploadUrl || !uploadData?.key) {
+            throw uploadError ?? new Error("업로드 URL 발급 실패");
           }
-          const { uploadUrl, key } = uploadRes as { uploadUrl: string; key: string };
+          const { uploadUrl, key, bucket } = uploadData as { uploadUrl: string; key: string; bucket?: string };
 
           // 실제 업로드
           const res = await fetch(uploadUrl, {
@@ -79,7 +80,7 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
           });
           if (!res.ok) throw new Error(`${file.name} 업로드 실패`);
 
-          uploadedFiles.push({ key, name: file.name, size: file.size, _id: item.id });
+          uploadedFiles.push({ key, name: file.name, size: file.size, _id: item.id, bucket });
 
           // UI 상태 업데이트(개별 항목 업로드 완료 표기)
           setItems((prev) =>
@@ -89,20 +90,18 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
       );
 
       // DB 기록
-      const dbReq = await fetch("/api/files/bulk-insert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(uploadedFiles.map(({ key, name, size }) => ({ key, name, size }))),
-      });
-      const dbRes = await dbReq.json();
-      if (!dbReq.ok || !dbRes?.success) throw new Error(dbRes?.message ?? "file 메타데이터 저장 실패");
+      const { error: insertError } = await supabase.from("file").insert(
+        uploadedFiles.map(({ key, name, size, bucket }) => ({
+          key,
+          bucket: bucket ?? process.env.NEXT_PUBLIC_S3_BUCKET_NAME,
+          original_file_name: name,
+          size,
+          status: "UPLOADED",
+          user_id: authData.user?.id,
+        }))
+      );
+      if (insertError) throw insertError;
 
-      // 상위에 누적 key 전달
-      const keys = (prevKeys: string[]) =>
-        [
-          ...prevKeys,
-          ...uploadedFiles.map((f) => f.key),
-        ];
       const allKeys = [
         ...items.map((i) => i.key).filter(Boolean) as string[],
         ...uploadedFiles.map((f) => f.key),
@@ -153,6 +152,8 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
       <button
         onClick={openPicker}
         disabled={isUploading}
+        type="button"
+        aria-busy={isUploading || undefined}
         className="w-full h-[56px] flex items-center justify-center gap-2 
                    rounded-lg border border-neutral-300 
                    text-[18px] font-semibold bg-white"
@@ -172,6 +173,7 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
         type="file"
         accept="image/*"
         multiple
+        tabIndex={-1}
         className="hidden"
         onChange={onPick}
       />
@@ -195,7 +197,7 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
                 className="absolute -top-2 -right-2 hidden group-hover:block
                            w-7 h-7 rounded-full bg-black/70 text-white text-sm
                            flex items-center justify-center"
-                aria-label="remove photo"
+                aria-label={`${item.file.name} 삭제`}
                 title="삭제"
               >
                 ×
@@ -203,7 +205,11 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
 
               {/* 업로드 상태 배지(선택) */}
               {!item.uploaded && (
-                <span className="absolute bottom-1 left-1 px-2 py-[2px] text-xs rounded bg-white/90 border">
+                <span
+                  className="absolute bottom-1 left-1 px-2 py-[2px] text-xs rounded bg-white/90 border"
+                  role="status"
+                  aria-live="polite"
+                >
                   업로드중…
                 </span>
               )}
