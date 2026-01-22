@@ -8,8 +8,6 @@ import OnboardingTopbar from "@/components/OnboardingTopbar";
 
 // ===== 색상 / 상수 =====
 const BRAND = "#6163FF";
-const BRAND_MENTOR = "#FF883F";
-const Role = ["후배(멘티)", "선배(멘토)"] as const;
 
 type User = {
   auth_id: string;
@@ -43,6 +41,20 @@ function hangulOnlyFilter(raw: string) {
 /** 닉네임 허용 문자 */
 function sanitizeNickname(raw: string) {
   return raw.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ_]/g, "");
+}
+
+/** 전화번호 포맷팅: 숫자만 추출 후 XXX-XXXX-XXXX 형식으로 변환 */
+function formatPhoneNumber(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 11); // 숫자만, 최대 11자리
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
+/** 전화번호 유효성 검사 (010-XXXX-XXXX 형식) */
+function validatePhoneNumber(phone: string): boolean {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length === 11 && digits.startsWith("010");
 }
 
 export default function SignUpPage() {
@@ -90,19 +102,17 @@ function SignUpPageContent() {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState<"남성" | "여성" | null>(null);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
 
-  // 3. 기존 유저 데이터 프리필
+  // 3. 기존 유저 데이터 프리필 (location 제외)
   useEffect(() => {
     if (!user) return;
-    if (user.location) setDong(user.location);
     if (user.birth_date)
       setAge(String(new Date().getFullYear() - new Date(user.birth_date).getFullYear()));
     if (user.nick_name) setName(user.nick_name);
     if (user.profile_image) setPhotoPreview(user.profile_image);
-    if (user.introduction) setRole(user.introduction);
   }, [user]);
 
   // step별 유효성
@@ -117,6 +127,7 @@ function SignUpPageContent() {
     if (name.length < 2 || name.length > 12) return false;
     return true;
   }, [name]);
+  const phoneOk = useMemo(() => validatePhoneNumber(phone), [phone]);
 
   const isNextDisabled = useMemo(() => {
     switch (step) {
@@ -129,16 +140,16 @@ function SignUpPageContent() {
       case 3:
         return !nameOk;
       case 4:
-        return !role;
+        return !phoneOk;
       default:
         return true;
     }
-  }, [step, dongOk, ageOk, gender, nameOk, role]);
+  }, [step, dongOk, ageOk, gender, nameOk, phoneOk]);
 
   // 프로그레스바
-  const [progress, setProgress] = useState(1 / 6);
+  const [progress, setProgress] = useState(1 / 5);
   useEffect(() => {
-    setProgress((step + 1) / 6);
+    setProgress((step + 1) / 5);
   }, [step]);
 
   // 사진 프리뷰
@@ -166,8 +177,9 @@ function SignUpPageContent() {
     if (step === 2 && gender) updates.gender = gender;
     if (step === 3) updates.nick_name = name;
     if (step === 4) {
+      // 전화번호 저장 (숫자만 추출해서 저장)
+      (updates as any).phone_number = phone.replace(/\D/g, "");
       updates.status = "DONE";
-      updates.introduction = role; // 역할을 introduction에 임시 저장
     }
 
     // (선택) 사진 업로드 로직: 추후 Supabase Storage로 추가
@@ -198,14 +210,8 @@ function SignUpPageContent() {
     // 단계 이동
     if (step < 4) {
       setStep((s) => s + 1);
-    }
-    else {
-      if (role === "후배(멘티)") {
-        router.push("/onboarding/junior")
-      }
-      if (role === "선배(멘토)") {
-        router.push("/onboarding/expert")
-      }
+    } else {
+      router.push("/onboarding/complete");
     }
   };
 
@@ -414,35 +420,26 @@ function SignUpPageContent() {
             </>
           )}
 
-          {/* 4. 가입유형 */}
+          {/* 4. 전화번호 */}
           {step === 4 && (
             <>
-              <div className="text-[22px] font-bold">어떤 유형으로 가입하시겠어요?</div>
-              <div className="flex flex-col gap-3">
-                {Role.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRole(r)}
-                    className="w-full rounded-xl border text-left px-4 py-4 transition-colors"
-                    style={{
-                      backgroundColor:
-                        role === r ? (r === "후배(멘티)" ? `${BRAND}99` : `${BRAND_MENTOR}99`) : "#F9FAFB",
-                      borderColor: role === r ? (r === "후배(멘티)" ? BRAND : BRAND_MENTOR) : "#E5E7EB",
-                    }}
-                  >
-                    <div className="text-[20px] font-semibold">{r.split("(")[0]}</div>
-                    <div className="text-[18px] text-neutral-600 mt-1">
-                      {r === "후배(멘티)" ? "선배님을 찾고 있어요." : "후배님을 찾고 있어요."}
-                    </div>
-                    <div className="text-[15px] text-neutral-400 mt-0.5">
-                      *{r === "후배(멘티)" ? "1분만에 간편하게" : "3분만에 간편하게"} 가입하기
-                    </div>
-                  </button>
-                ))}
+              <div className="text-[22px] font-bold">전화번호를 입력해주세요.</div>
+              <div className="relative">
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+                  placeholder="010-0000-0000"
+                  inputMode="numeric"
+                  className="w-full h-12 rounded-lg border px-3 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                />
+                <CheckDot show={phoneOk} />
               </div>
+              <p className="text-xs text-neutral-500">
+                숫자만 입력하시면 자동으로 형식이 적용됩니다.
+              </p>
             </>
           )}
+
         </div>
 
         {/* 하단 네비게이션 */}
@@ -451,7 +448,7 @@ function SignUpPageContent() {
           onNext={handleNext}
           isNextDisabled={isNextDisabled}
           isFirstStep={step === 0}
-          nextLabel={step < 4 ? "다음" : "시작하기"}
+          nextLabel={step < 4 ? "다음" : "완료"}
         />
       </div>
     </div>

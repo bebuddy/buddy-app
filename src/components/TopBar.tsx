@@ -3,37 +3,32 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChevronDown } from "lucide-react";
-import { useEffect } from "react";
-import { useSelectedDong } from "@/lib/locationStore";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
-// 1. prop을 받기 위한 인터페이스 추가
-interface TopBarProps {
-  showLocation?: boolean; // '동' 버튼 표시 여부
-}
-
-// 2. props를 받고, showLocation의 기본값을 true로 설정
-export default function TopBar({ showLocation = true }: TopBarProps) {
+export default function TopBar() {
   const router = useRouter();
-  const { dong, setDong } = useSelectedDong();
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  // 최초 마운트 시, sign-up에서 저장한 로컬 스토리지 값으로 기본 동 세팅
-  // localStorage: ob.basic = { dong, age, gender, name, role, ... }
+  // 유저 프로필 이미지 가져오기
   useEffect(() => {
-    if (dong) return;
-    if (typeof window === "undefined") return;
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    try {
-      const raw = localStorage.getItem("ob.basic");
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed?.dong && typeof parsed.dong === "string") {
-        setDong(parsed.dong);
+      const { data } = await supabase
+        .from("users")
+        .select("profile_image")
+        .eq("auth_id", user.id)
+        .single();
+
+      if (data?.profile_image) {
+        setProfileImage(data.profile_image);
       }
-    } catch {
-      // 파싱 실패하면 무시
-    }
-  }, [dong, setDong]);
+    };
+
+    fetchUserProfile();
+  }, []);
 
   return (
     <>
@@ -60,27 +55,30 @@ export default function TopBar({ showLocation = true }: TopBarProps) {
             priority
           />
 
-          {/* 3. showLocation이 true일 때만 '동' 버튼 렌더링 */}
-          {showLocation && (
-            <button
-              type="button"
-              onClick={() => console.log("준비중")}
-              className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 cursor-pointer hover:opacity-80"
-              aria-label="행정동 선택"
-            >
-              <span className="text-lg font-extrabold text-neutral-800">
-                {dong ?? "대현동"}
-              </span>
-              <ChevronDown className="w-4 h-4 text-neutral-700" />
-            </button>
-          )}
-
-          {/* 오른쪽: 프로필(임시) */}
+          {/* 오른쪽: 프로필 */}
           <button
             aria-label="내 정보"
-            className="w-8 h-8 rounded-full bg-neutral-300"
+            className="w-8 h-8 rounded-full overflow-hidden bg-neutral-200"
             onClick={() => router.push("/myPage")}
-          />
+          >
+            {profileImage ? (
+              <img
+                src={profileImage}
+                alt="프로필"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-neutral-400"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+              </div>
+            )}
+          </button>
         </div>
       </div>
     </>

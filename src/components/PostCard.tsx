@@ -7,6 +7,20 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import SaveButton from "./SaveButton"; // SaveButton 임포트
 
+function formatAgo(dateStr?: string) {
+  if (!dateStr) return "";
+  const ts = new Date(dateStr).getTime();
+  const diff = Date.now() - ts;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(hours / 24);
+
+  if (minutes < 1) return "방금 전";
+  if (minutes < 60) return `${minutes}분 전`;
+  if (hours < 24) return `${hours}시간 전`;
+  return `${days}일 전`;
+}
+
 export default function PostCard({
   item,
   brand = "#6163FF",
@@ -67,7 +81,9 @@ export default function PostCard({
         )}
       </div>
 
-      <div className="mt-2 text-[16px] text-neutral-500">1일 전</div>
+      {item.updatedAt && (
+        <div className="mt-2 text-[16px] text-neutral-500">{formatAgo(item.updatedAt)}</div>
+      )}
     </div>
   );
 }

@@ -140,8 +140,8 @@ export default function ChatPage() {
         className="px-4 py-6"
         style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }}
       >
-        {/* 상단 '대화' 헤더와 오른쪽 아이콘 */}
-        <TopBar showLocation={false} />
+        {/* 상단 헤더 */}
+        <TopBar />
         
         <ChatTabs activeTab={activeTab} onTabChange={setActiveTab} />
 

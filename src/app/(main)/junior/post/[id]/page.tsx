@@ -101,10 +101,19 @@ export default function Page() {
   const [notFoundMsg, setNotFoundMsg] = useState<string | null>(null);
   const [isStartingChat, setIsStartingChat] = useState(false);
 
-  type Comment = { name: string; text: string; ts: number };
+  type Comment = {
+    id: string;
+    content: string;
+    created_at: string;
+    user: {
+      id: string;
+      nick_name: string | null;
+      profile_image: string | null;
+    } | null;
+  };
   const [comments, setComments] = React.useState<Comment[]>([]);
   const [cText, setCText] = React.useState("");
-  const [meName, setMeName] = React.useState<string>("익명");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const router = useRouter();
 
@@ -131,11 +140,55 @@ export default function Page() {
     };
   }, [id]);
 
-  function addComment() {
+  // 댓글 불러오기
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchComments = async () => {
+      try {
+        const res = await fetch(`/api/comments?postId=${id}&postType=junior`);
+        const json = await res.json();
+        if (res.ok && json?.success) {
+          setComments(json.data ?? []);
+        }
+      } catch (error) {
+        console.error("댓글 조회 오류:", error);
+      }
+    };
+
+    fetchComments();
+  }, [id]);
+
+  async function addComment() {
     const text = cText.trim();
-    if (!text) return;
-    setComments((prev) => [{ name: meName, text, ts: Date.now() }, ...prev]);
-    setCText("");
+    if (!text || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: id,
+          postType: "junior",
+          content: text,
+        }),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json?.success) {
+        alert(json?.message ?? "댓글 작성에 실패했습니다.");
+        return;
+      }
+
+      setComments((prev) => [json.data, ...prev]);
+      setCText("");
+    } catch (error) {
+      console.error("댓글 작성 오류:", error);
+      alert("댓글 작성에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function handleStartChat() {
@@ -255,7 +308,7 @@ export default function Page() {
 
           {/* 댓글 */}
           <div className="mt-5">
-            <div className="font-bold-16 text-neutral-900">댓글</div>
+            <div className="font-bold-16 text-neutral-900">댓글 {comments.length > 0 && `(${comments.length})`}</div>
 
             <div className="mt-3 flex items-stretch gap-2">
               <textarea
@@ -267,10 +320,11 @@ export default function Page() {
               />
               <button
                 onClick={addComment}
-                className="h-[44px] px-4 rounded-lg font-bold text-white self-end"
+                disabled={isSubmitting}
+                className="h-[44px] px-4 rounded-lg font-bold text-white self-end disabled:opacity-50"
                 style={{ backgroundColor: Brand }}
               >
-                등록
+                {isSubmitting ? "..." : "등록"}
               </button>
             </div>
 
@@ -278,16 +332,24 @@ export default function Page() {
               {comments.length === 0 ? (
                 <div className="font-regular-16 text-neutral-500">아직 댓글이 없습니다.</div>
               ) : (
-                comments.map((c, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-neutral-200 shrink-0" />
+                comments.map((c) => (
+                  <div key={c.id} className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-neutral-200 shrink-0 overflow-hidden flex items-center justify-center">
+                      {c.user?.profile_image ? (
+                        <img src={c.user.profile_image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <svg className="w-5 h-5 text-neutral-400" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                      )}
+                    </div>
                     <div className="flex-1">
-                      <div className="font-bold-16 text-neutral-900">
-                        {c.name}{" "}
-                        {/* <span className="ml-2 text-neutral-400 text-[12px]">{formatAgo(c.ts)}</span> */}
+                      <div className="font-bold-14 text-neutral-900">
+                        {c.user?.nick_name ?? "익명"}
+                        <span className="ml-2 font-regular-12 text-neutral-400">{formatAgo(c.created_at)}</span>
                       </div>
-                      <div className="mt-1 font-regular-16 text-neutral-900 whitespace-pre-wrap">
-                        {c.text}
+                      <div className="mt-1 font-regular-14 text-neutral-900 whitespace-pre-wrap">
+                        {c.content}
                       </div>
                     </div>
                   </div>
