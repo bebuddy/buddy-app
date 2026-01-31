@@ -111,3 +111,56 @@ export interface RegisterJuniorReq {
     seniorGender: GenderValue;
     fileKeys: string[]
 }
+
+export const SeniorLevelType = {
+    "고수": "고수",
+    "초고수": "초고수",
+    "신": "신"
+} as const
+export type SeniorLevelType = keyof typeof SeniorLevelType
+
+export const JuniorType = {
+    "의지가 강한": "의지가 강한",
+    "성장 욕구가 있는": "성장 욕구가 있는",
+    "현업을 꿈꾸는": "현업을 꿈꾸는",
+    "깊이 고민하는": "깊이 고민하는",
+    "다양한 시도": "다양한 시도",
+    "예의 바른": "예의 바른",
+    "협력적인": "협력적인",
+    "피드백에 유연한": "피드백에 유연한",
+    "신뢰할 수 있는": "신뢰할 수 있는",
+    "적극적인": "적극적인",
+    "밝고 유쾌한": "밝고 유쾌한",
+    "실행력 있는": "실행력 있는",
+    "꾸준한": "꾸준한",
+    "수용적인": "수용적인",
+    "공감능력": "공감능력",
+    "열려있는": "열려있는",
+    "밝은": "밝은",
+} as const;
+
+export type JuniorKey = keyof typeof JuniorType;
+export type JuniorValue = (typeof JuniorType)[JuniorKey];
+
+export const JuniorGenderType = {
+    "남자 후배님": "남성",
+    "여자 후배님": "여성",
+    "상관없음": "상관없음",
+} as const;
+
+export type JuniorGenderKey = keyof typeof JuniorGenderType;
+export type JuniorGenderValue = (typeof JuniorGenderType)[JuniorGenderKey];
+
+export interface RegisterSeniorReq {
+    category: string;
+    title: string;
+    content: string;
+    level: SeniorLevelType;
+    datesTimes: DayAndTime;
+    juniorType: JuniorValue[];
+    classType: ClassValue;
+    budget: number | null;
+    budgetType: BudgetValue;
+    juniorGender: JuniorGenderValue;
+    fileKeys: string[]
+}

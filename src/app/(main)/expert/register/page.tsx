@@ -107,32 +107,93 @@ export default function ExpertRegisterPage() {
   async function handleSubmit() {
     if (!isValid) return;
 
-    // 1) 상세 페이지가 기대하는 모양으로 프리뷰 데이터 만들기
-    const preview = {
-      id: "preview",
-      title,
-      category: null as string | null,
-      createdAt: Date.now(),
-      imageUrls: fileKeys.map(k => `/api/files/${k}`), // presigned redirect 라우트 사용
-      priceKRW: negotiable ? 0 : Number(price || 0),
-      unit: negotiable ? null : (unit || "시간"),
-      timeNote: times.includes("시간대 협의") ? "시간대 협의" : times.join(", "),
-      paragraphs: [desc],
-      mentorTypes,
-      meetPref,
-      author: { name: "익명", age: "-", gender: "-" },
+    // 1) 사용자 정보 조회
+    let userId: string | null = null;
+    try {
+      const userRes = await fetch("/api/users/me");
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        userId = userData?.data?.id ?? null;
+      }
+    } catch (e) {
+      console.error("Failed to fetch user:", e);
+    }
+
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      router.push("/login");
+      return;
+    }
+
+    // 2) 시간대 값 변환
+    const timeMapping: Record<string, string> = {
+      "아침 (06:00 ~ 10:00)": "아침",
+      "오전 (10:00 ~ 12:00)": "오전",
+      "오후 (12:00 ~ 18:00)": "오후",
+      "저녁 (18:00 ~ 22:00)": "저녁",
+      "야간 (22:00 이후)": "야간",
+      "시간대 협의": "시간대 협의",
+    };
+    const classTypeMapping: Record<string, string> = {
+      "대면이 좋아요": "대면",
+      "비대면이 좋아요": "비대면",
+      "상관없어요": "상관없음",
+    };
+    const genderMapping: Record<string, string> = {
+      "남자 후배님": "남성",
+      "여자 후배님": "여성",
+      "상관없음": "상관없음",
     };
 
-    // 2) 로컬 저장 + 프리뷰 상세로 이동 (백엔드 없어도 즉시 화면 확인)
-    try {
-      localStorage.setItem("postPreview", JSON.stringify(preview));
-    } catch { }
-    router.push("/expert/post/preview");
+    const mappedTimes = times.map(t => timeMapping[t] ?? t);
+    const mappedDays = days.includes("요일 협의") ? "요일 협의" : days.filter(d => d !== "요일 협의");
+    const mappedTimesFinal = times.includes("시간대 협의") ? "시간대 협의" : mappedTimes.filter(t => t !== "시간대 협의");
 
-    // 3) (선택) 백엔드 호출은 비동기로 시도 — 화면 전환과 무관
-    void (async () => {
-      // await createJuniorPostAction(req, mockUserId);
-    })();
+    // 3) 요청 데이터 구성
+    const requestBody = {
+      userId,
+      category: category ?? "",
+      title,
+      content: desc,
+      level: level ?? "고수",
+      datesTimes: {
+        day: mappedDays,
+        time: mappedTimesFinal,
+      },
+      juniorType: mentorTypes,
+      classType: classTypeMapping[meetPref ?? ""] ?? "상관없음",
+      budget: negotiable ? null : (price ? Number(price) : null),
+      budgetType: negotiable ? "협의" : (unit ?? "시간"),
+      juniorGender: genderMapping[gender ?? ""] ?? "상관없음",
+      fileKeys,
+    };
+
+    // 4) API 호출
+    try {
+      const res = await fetch("/api/posts/senior", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        alert(result.message ?? "게시글 생성에 실패했습니다.");
+        return;
+      }
+
+      // 5) 성공 시 상세 페이지로 이동
+      const postId = result.data?.id;
+      if (postId) {
+        router.push(`/expert/post/${postId}`);
+      } else {
+        router.push("/expert");
+      }
+    } catch (e) {
+      console.error("게시글 생성 오류:", e);
+      alert("게시글 생성 중 오류가 발생했습니다.");
+    }
   }
 
   // ✅ 비활성 칩 계산
