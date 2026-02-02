@@ -3,7 +3,6 @@
 "use client";
 
 import { Item } from "@/app/(main)/junior/page"; // 기존 경로 유지
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import SaveButton from "./SaveButton"; // SaveButton 임포트
 
@@ -19,6 +18,22 @@ function formatAgo(dateStr?: string) {
   if (minutes < 60) return `${minutes}분 전`;
   if (hours < 24) return `${hours}시간 전`;
   return `${days}일 전`;
+}
+
+function buildFileUrl(key: string) {
+  const encoded = key
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `/api/files/${encoded}`;
+}
+
+function resolveImageUrl(value?: string | null) {
+  if (!value) return null;
+  if (value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/")) {
+    return value;
+  }
+  return buildFileUrl(value);
 }
 
 export default function PostCard({
@@ -69,13 +84,12 @@ export default function PostCard({
           {item.content}
         </p>
         {/* 이미지 자리 */}
-        {item.imageUrlM && item.imageUrlM?.length !== 0 && (
-          <div className="flex shrink-0 relative mt-2 w-[100px] h-[80px] rounded-md bg-neutral-300 overflow-hidden" aria-hidden>
-            <Image
-              src={item.imageUrlM}
+        {resolveImageUrl(item.imageUrlM) && (
+          <div className="flex shrink-0 mt-2 w-[100px] h-[80px] rounded-md bg-neutral-300 overflow-hidden" aria-hidden>
+            <img
+              src={resolveImageUrl(item.imageUrlM)!}
               alt="이미지"
-              fill
-              style={{ objectFit: "cover" }} // objectFit 추가
+              className="w-full h-full object-cover"
             />
           </div>
         )}
