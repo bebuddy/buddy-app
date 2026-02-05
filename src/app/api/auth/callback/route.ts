@@ -25,21 +25,52 @@ async function createSupabaseClient() {
 }
 
 // 앱으로 딥링크 리다이렉트하는 HTML 페이지 반환
-function createDeepLinkResponse(deepLinkUrl: string) {
+function createDeepLinkResponse(deepLinkUrl: string, isError = false) {
   const html = `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
-        <title>로그인 완료</title>
+        <title>로그인 ${isError ? "실패" : "완료"}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+          }
+          .container {
+            text-align: center;
+            padding: 20px;
+          }
+          h1 { font-size: 24px; margin-bottom: 16px; }
+          p { color: #666; margin-bottom: 24px; }
+          .btn {
+            display: inline-block;
+            background: #4285f4;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+          }
+        </style>
       </head>
       <body>
-        <p style="text-align: center; margin-top: 100px; font-family: sans-serif;">
-          앱으로 이동 중...
-        </p>
+        <div class="container">
+          <h1>${isError ? "로그인 실패" : "로그인 완료!"}</h1>
+          <p>${isError ? "다시 시도해주세요." : "아래 버튼을 눌러 앱으로 돌아가세요."}</p>
+          <a href="${deepLinkUrl}" class="btn">앱으로 돌아가기</a>
+        </div>
         <script>
-          window.location.href = "${deepLinkUrl}";
+          // 자동으로 시도하되, 실패하면 버튼 사용
+          setTimeout(() => { window.location.href = "${deepLinkUrl}"; }, 100);
         </script>
       </body>
     </html>
@@ -56,7 +87,7 @@ export async function GET(request: NextRequest) {
 
   if (!code) {
     if (isApp) {
-      return createDeepLinkResponse("buddyapp://auth?error=missing_code");
+      return createDeepLinkResponse("buddyapp://auth?error=missing_code", true);
     }
     return NextResponse.redirect(new URL("/sign-in?error=missing_code", origin));
   }
@@ -66,7 +97,7 @@ export async function GET(request: NextRequest) {
 
   if (error || !data.session) {
     if (isApp) {
-      return createDeepLinkResponse("buddyapp://auth?error=exchange_failed");
+      return createDeepLinkResponse("buddyapp://auth?error=exchange_failed", true);
     }
     return NextResponse.redirect(new URL("/sign-in?error=exchange_failed", origin));
   }
