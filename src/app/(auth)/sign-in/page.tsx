@@ -4,71 +4,15 @@ import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { track } from "@/lib/mixpanel";
 import { Capacitor } from "@capacitor/core";
-import { App } from "@capacitor/app";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 
 export default function SigninPage() {
     const hasTracked = useRef(false);
-    const router = useRouter();
-
-    // 딥링크 URL에서 토큰 처리
-    const handleDeepLink = async (url: string) => {
-        if (!url.startsWith("buddyapp://auth")) return;
-
-        // 커스텀 URL 스킴은 new URL()로 파싱하면 불안정할 수 있어서 직접 파싱
-        const queryString = url.split("?")[1] || "";
-        const params = new URLSearchParams(queryString);
-        const accessToken = params.get("access_token");
-        const refreshToken = params.get("refresh_token");
-        const error = params.get("error");
-
-        if (error) {
-            alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
-            return;
-        }
-
-        if (accessToken && refreshToken) {
-            const { error: sessionError } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-            });
-
-            if (sessionError) {
-                alert("세션 설정 중 오류가 발생했습니다.");
-                return;
-            }
-
-            router.push("/verify");
-        }
-    };
 
     useEffect(() => {
         if (hasTracked.current) return;
         hasTracked.current = true;
         track("sign_in_viewed");
-
-        // Capacitor 앱에서 딥링크 처리
-        if (Capacitor.isNativePlatform()) {
-            // 앱이 딥링크로 시작된 경우 확인
-            App.getLaunchUrl().then((result) => {
-                if (result?.url) {
-                    handleDeepLink(result.url);
-                }
-            });
-
-            // 앱 실행 중 딥링크 수신 처리
-            App.addListener("appUrlOpen", ({ url }) => {
-                handleDeepLink(url);
-            });
-        }
-
-        return () => {
-            if (Capacitor.isNativePlatform()) {
-                App.removeAllListeners();
-            }
-        };
-    }, [router]);
+    }, []);
 
     // 앱 환경 감지 (Capacitor 또는 User-Agent 기반)
     const isNativeApp = () => {
