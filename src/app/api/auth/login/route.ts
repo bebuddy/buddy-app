@@ -27,6 +27,7 @@ async function createSupabaseClient() {
 export async function GET(request: NextRequest) {
   const provider = (request.nextUrl.searchParams.get("provider") ?? "google") as "google";
   const isApp = request.nextUrl.searchParams.get("app") === "true";
+  const sessionId = request.nextUrl.searchParams.get("session_id");
   const supabase = await createSupabaseClient();
 
   const origin =
@@ -34,10 +35,14 @@ export async function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_APP_URL ??
     request.nextUrl.origin;
 
-  // 앱인 경우 콜백 URL에 app=true 추가
-  const redirectTo = isApp
-    ? `${origin}/api/auth/callback?app=true`
-    : `${origin}/api/auth/callback`;
+  // 앱인 경우 콜백 URL에 app=true와 session_id 추가
+  let redirectTo = `${origin}/api/auth/callback`;
+  if (isApp) {
+    redirectTo += `?app=true`;
+    if (sessionId) {
+      redirectTo += `&session_id=${encodeURIComponent(sessionId)}`;
+    }
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
