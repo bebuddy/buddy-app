@@ -39,16 +39,26 @@ export default function SigninPage() {
         return false;
     };
 
+    // 고유 세션 ID 생성
+    const generateSessionId = () => {
+        return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    };
+
     // Google 로그인 함수
     const handleGoogleSignin = async () => {
         try {
             track("sign_in_clicked", { provider: "google" });
 
-            // 앱인 경우 app=true 파라미터 추가
+            // 앱인 경우 app=true 파라미터와 session_id 추가
             const isApp = isNativeApp();
-            const loginUrl = isApp
-                ? "/api/auth/login?provider=google&app=true"
-                : "/api/auth/login?provider=google";
+            let loginUrl = "/api/auth/login?provider=google";
+
+            if (isApp) {
+                const sessionId = generateSessionId();
+                // localStorage에 session_id 저장 (앱으로 돌아왔을 때 폴링에 사용)
+                localStorage.setItem("pending_auth_session_id", sessionId);
+                loginUrl += `&app=true&session_id=${sessionId}`;
+            }
 
             window.location.href = loginUrl;
         } catch (error) {
