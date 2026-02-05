@@ -10,7 +10,7 @@ export default function VerifyPage() {
   useEffect(() => {
     const verify = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) return router.push("/signin");
+      if (error || !user) return router.push("/sign-in");
 
       const authId = user.id;
 

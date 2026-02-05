@@ -10,6 +10,7 @@ import PostCard from "@/components/PostCard";
 import RefreshButton from "@/components/RefreshButton";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNav from "@/components/BottomNav";
+import { apiFetch } from "@/lib/apiFetch";
 const BRAND = "#6163FF";
 
 export type Item = {
@@ -31,7 +32,7 @@ export default function Page() {
   async function refreshItemList() {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/posts/junior?count=20", { cache: "no-store" });
+      const res = await apiFetch("/api/posts/junior?count=20", { cache: "no-store" });
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 불러오지 못했습니다.");
       const mapped: Item[] = (json.data ?? []).map((row: Item & { image_url_m?: string | null; updated_at?: string | null }) => ({
