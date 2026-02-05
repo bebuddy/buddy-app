@@ -55,13 +55,38 @@ export default function SigninPage() {
         };
     }, [router]);
 
+    // 앱 환경 감지 (Capacitor 또는 User-Agent 기반)
+    const isNativeApp = () => {
+        // Capacitor 브릿지 확인
+        if (typeof window !== "undefined" && (window as unknown as { Capacitor?: unknown }).Capacitor) {
+            return true;
+        }
+        // Capacitor.isNativePlatform() 확인
+        try {
+            if (Capacitor.isNativePlatform()) {
+                return true;
+            }
+        } catch {
+            // Capacitor가 로드되지 않은 경우
+        }
+        // User-Agent로 iOS 앱 WebView 감지
+        if (typeof navigator !== "undefined") {
+            const ua = navigator.userAgent;
+            // Capacitor iOS WebView 감지
+            if (ua.includes("Capacitor") || (ua.includes("iPhone") && !ua.includes("Safari"))) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     // Google 로그인 함수
     const handleGoogleSignin = async () => {
         try {
             track("sign_in_clicked", { provider: "google" });
 
-            // Capacitor 앱인 경우 app=true 파라미터 추가
-            const isApp = Capacitor.isNativePlatform();
+            // 앱인 경우 app=true 파라미터 추가
+            const isApp = isNativeApp();
             const loginUrl = isApp
                 ? "/api/auth/login?provider=google&app=true"
                 : "/api/auth/login?provider=google";
