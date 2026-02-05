@@ -3,20 +3,70 @@
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { track } from "@/lib/mixpanel";
+import { Capacitor } from "@capacitor/core";
+import { App } from "@capacitor/app";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function SigninPage() {
     const hasTracked = useRef(false);
+    const router = useRouter();
+
     useEffect(() => {
         if (hasTracked.current) return;
         hasTracked.current = true;
         track("sign_in_viewed");
-    }, []);
 
-    // ✅ Google 로그인 함수 (Route Handler 경유)
+        // Capacitor 앱에서 딥링크 수신 처리
+        if (Capacitor.isNativePlatform()) {
+            App.addListener("appUrlOpen", async ({ url }) => {
+                if (url.startsWith("buddyapp://auth")) {
+                    const params = new URL(url).searchParams;
+                    const accessToken = params.get("access_token");
+                    const refreshToken = params.get("refresh_token");
+                    const error = params.get("error");
+
+                    if (error) {
+                        alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+                        return;
+                    }
+
+                    if (accessToken && refreshToken) {
+                        const { error: sessionError } = await supabase.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken,
+                        });
+
+                        if (sessionError) {
+                            alert("세션 설정 중 오류가 발생했습니다.");
+                            return;
+                        }
+
+                        router.push("/verify");
+                    }
+                }
+            });
+        }
+
+        return () => {
+            if (Capacitor.isNativePlatform()) {
+                App.removeAllListeners();
+            }
+        };
+    }, [router]);
+
+    // Google 로그인 함수
     const handleGoogleSignin = async () => {
         try {
             track("sign_in_clicked", { provider: "google" });
-            window.location.href = "/api/auth/login?provider=google";
+
+            // Capacitor 앱인 경우 app=true 파라미터 추가
+            const isApp = Capacitor.isNativePlatform();
+            const loginUrl = isApp
+                ? "/api/auth/login?provider=google&app=true"
+                : "/api/auth/login?provider=google";
+
+            window.location.href = loginUrl;
         } catch (error) {
             console.error("Google login error:", error);
             alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");

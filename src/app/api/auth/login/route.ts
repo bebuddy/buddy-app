@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 async function createSupabaseClient() {
-  // TypeScript가 Promise 반환으로 간주하는 케이스를 피하기 위해 await 사용
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -27,17 +26,23 @@ async function createSupabaseClient() {
 
 export async function GET(request: NextRequest) {
   const provider = (request.nextUrl.searchParams.get("provider") ?? "google") as "google";
+  const isApp = request.nextUrl.searchParams.get("app") === "true";
   const supabase = await createSupabaseClient();
-  // Prefer a configured site URL to avoid accidental localhost redirects in production
+
   const origin =
     process.env.NEXT_PUBLIC_SITE_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
     request.nextUrl.origin;
 
+  // 앱인 경우 콜백 URL에 app=true 추가
+  const redirectTo = isApp
+    ? `${origin}/api/auth/callback?app=true`
+    : `${origin}/api/auth/callback`;
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${origin}/api/auth/callback`,
+      redirectTo,
     },
   });
 
