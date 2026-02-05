@@ -102,11 +102,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in?error=exchange_failed", origin));
   }
 
-  // 앱인 경우 딥링크로 토큰 전달
+  // 앱인 경우 웹 URL로 토큰 전달 (WebView에서 처리)
   if (isApp) {
     const { access_token, refresh_token } = data.session;
-    return createDeepLinkResponse(
-      `buddyapp://auth?access_token=${access_token}&refresh_token=${refresh_token}`
+    return NextResponse.redirect(
+      new URL(`/auth-callback?access_token=${access_token}&refresh_token=${refresh_token}`, origin)
     );
   }
 
