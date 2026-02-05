@@ -106,8 +106,9 @@ export async function GET(request: NextRequest) {
   // 앱인 경우 딥링크로 토큰 전달
   if (isApp) {
     const { access_token, refresh_token } = data.session;
+    // 토큰에 특수문자가 있을 수 있으므로 URL 인코딩
     return createDeepLinkResponse(
-      `buddyapp://auth?access_token=${access_token}&refresh_token=${refresh_token}`
+      `buddyapp://auth?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`
     );
   }
 
