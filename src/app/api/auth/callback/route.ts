@@ -24,6 +24,7 @@ async function createSupabaseClient() {
   );
 }
 
+
 // 앱으로 딥링크 리다이렉트하는 HTML 페이지 반환
 function createDeepLinkResponse(deepLinkUrl: string, isError = false) {
   const html = `

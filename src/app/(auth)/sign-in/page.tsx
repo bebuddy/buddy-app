@@ -16,7 +16,9 @@ export default function SigninPage() {
     const handleDeepLink = async (url: string) => {
         if (!url.startsWith("buddyapp://auth")) return;
 
-        const params = new URL(url).searchParams;
+        // 커스텀 URL 스킴은 new URL()로 파싱하면 불안정할 수 있어서 직접 파싱
+        const queryString = url.split("?")[1] || "";
+        const params = new URLSearchParams(queryString);
         const accessToken = params.get("access_token");
         const refreshToken = params.get("refresh_token");
         const error = params.get("error");
