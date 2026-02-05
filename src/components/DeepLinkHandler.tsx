@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
+import type { PluginListenerHandle } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { supabase } from "@/lib/supabase";
 
@@ -51,8 +52,11 @@ export default function DeepLinkHandler() {
       router.replace("/verify");
     };
 
-    const sub = App.addListener("appUrlOpen", ({ url }) => {
+    let sub: PluginListenerHandle | null = null;
+    void App.addListener("appUrlOpen", ({ url }) => {
       if (url) void handleDeepLink(url);
+    }).then((handle) => {
+      sub = handle;
     });
 
     App.getLaunchUrl().then((result) => {
@@ -60,7 +64,7 @@ export default function DeepLinkHandler() {
     });
 
     return () => {
-      sub.remove();
+      if (sub) void sub.remove();
     };
   }, [router]);
 
