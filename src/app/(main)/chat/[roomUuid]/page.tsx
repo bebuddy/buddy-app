@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { SimpleUserDto, UserMessageViewDto } from "@/types/chat.dto";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/apiFetch";
 import ChatHeader from "@/components/ChatHeader";
 import ChatProfileHeader from "@/components/ChatProfileHeader";
 import MessageList from "@/components/MessageList";
@@ -52,7 +53,7 @@ export default function ChatRoomPage({ params }: ChatRoomPageProps) {
       setMyUserId(myId);
 
       try {
-        const res = await fetch(`/api/messages/${params.roomUuid}/messages`, { cache: "no-store" });
+        const res = await apiFetch(`/api/messages/${params.roomUuid}/messages`, { cache: "no-store" });
         const json = await res.json();
         if (!res.ok || !json?.success) {
           throw new Error(json?.message ?? "메시지를 불러올 수 없습니다.");
@@ -152,7 +153,7 @@ export default function ChatRoomPage({ params }: ChatRoomPageProps) {
     setMessages((prev) => [...prev, optimistic]);
 
     try {
-      const res = await fetch(`/api/messages/${params.roomUuid}/messages`, {
+      const res = await apiFetch(`/api/messages/${params.roomUuid}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body: newMessageText }),

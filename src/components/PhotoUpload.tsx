@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { apiFetch } from "@/lib/apiFetch";
 
 interface PhotoUploadProps {
   brand?: string;
@@ -60,7 +61,7 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
           const file = item.file;
 
           // presigned URL 발급
-          const uploadReq = await fetch("/api/files/upload-url", {
+          const uploadReq = await apiFetch("/api/files/upload-url", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ bucket, fileName: file.name }),
@@ -89,7 +90,7 @@ export default function PhotoUpload({ brand = "#33AF83", onChange }: PhotoUpload
       );
 
       // DB 기록
-      const dbReq = await fetch("/api/files/bulk-insert", {
+      const dbReq = await apiFetch("/api/files/bulk-insert", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(uploadedFiles.map(({ key, name, size }) => ({ key, name, size }))),

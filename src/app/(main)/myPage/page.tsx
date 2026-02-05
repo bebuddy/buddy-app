@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Plus } from "lucide-react";
 import ChipGroup from "@/components/ChipGroup";
+import { apiFetch } from "@/lib/apiFetch";
 
 const ORANGE = "#FF843D";        // 칩/플러스 버튼 오렌지
 const PURPLE = "#6163FF";        // 알림 배지/테두리
@@ -56,7 +57,7 @@ export default function MyPage() {
 
   async function loadInterests() {
     try {
-      const res = await fetch("/api/users/interests", { cache: "no-store" });
+      const res = await apiFetch("/api/users/interests", { cache: "no-store" });
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.message ?? "관심사를 불러오지 못했습니다.");
       const list = (json.data as string[] | undefined) ?? [];
@@ -71,7 +72,7 @@ export default function MyPage() {
     let active = true;
     const fetchMe = async () => {
       try {
-        const res = await fetch("/api/users/me", { cache: "no-store" });
+      const res = await apiFetch("/api/users/me", { cache: "no-store" });
         const json = await res.json();
         if (!res.ok || !json?.success) throw new Error(json?.message ?? "내 정보를 불러오지 못했습니다.");
         if (!active) return;
@@ -91,7 +92,7 @@ export default function MyPage() {
     void loadInterests();
     void (async () => {
       try {
-        const res = await fetch("/api/notifications/unread-count", { cache: "no-store" });
+        const res = await apiFetch("/api/notifications/unread-count", { cache: "no-store" });
         const json = await res.json();
         if (!res.ok || !json?.success) throw new Error(json?.message ?? "알림을 불러오지 못했습니다.");
         setNotificationCount(Number(json.data?.unreadCount ?? 0));
@@ -278,7 +279,7 @@ export default function MyPage() {
                 onClick={() => {
                     void (async () => {
                         try {
-                            const res = await fetch("/api/users/interests", {
+                            const res = await apiFetch("/api/users/interests", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ values: tempInterests }),
