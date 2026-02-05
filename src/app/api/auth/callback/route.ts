@@ -24,6 +24,31 @@ async function createSupabaseClient() {
   );
 }
 
+// 수동으로 토큰 교환 (앱용)
+async function exchangeCodeForTokens(code: string, codeVerifier: string, redirectUri: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+
+  const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=authorization_code`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": process.env.NEXT_PUBLIC_SUPABASE_KEY as string,
+    },
+    body: JSON.stringify({
+      auth_code: code,
+      code_verifier: codeVerifier,
+      redirect_uri: redirectUri,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Token exchange failed: ${error}`);
+  }
+
+  return response.json();
+}
+
 
 // 앱으로 돌아가라는 HTML 페이지 반환 (폴링 방식)
 function createAppReturnResponse(isError = false, errorMsg = "") {
@@ -77,9 +102,9 @@ function createAppReturnResponse(isError = false, errorMsg = "") {
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
+  const state = request.nextUrl.searchParams.get("state");
   const origin = request.nextUrl.origin;
   const isApp = request.nextUrl.searchParams.get("app") === "true";
-  const sessionId = request.nextUrl.searchParams.get("session_id");
 
   if (!code) {
     if (isApp) {
@@ -88,43 +113,53 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in?error=missing_code", origin));
   }
 
+  // 앱인 경우: state에서 code_verifier와 session_id 추출
+  if (isApp && state) {
+    try {
+      // state 디코딩
+      const stateData = JSON.parse(Buffer.from(state, "base64url").toString());
+      const { sessionId, codeVerifier } = stateData;
+
+      if (!sessionId || !codeVerifier) {
+        return createAppReturnResponse(true, "인증 정보가 올바르지 않습니다.");
+      }
+
+      const redirectUri = `${origin}/api/auth/callback?app=true`;
+
+      // 수동으로 토큰 교환
+      const tokenData = await exchangeCodeForTokens(code, codeVerifier, redirectUri);
+
+      if (!tokenData.access_token || !tokenData.refresh_token) {
+        return createAppReturnResponse(true, "토큰을 받지 못했습니다.");
+      }
+
+      // pending-session API에 토큰 저장
+      await fetch(`${origin}/api/auth/pending-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          accessToken: tokenData.access_token,
+          refreshToken: tokenData.refresh_token,
+        }),
+      });
+
+      return createAppReturnResponse(false);
+    } catch (e) {
+      console.error("App auth error:", e);
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      return createAppReturnResponse(true, errorMsg.substring(0, 200));
+    }
+  }
+
+  // 웹인 경우: 기존 방식
   const supabase = await createSupabaseClient();
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.session) {
     const errorMsg = error?.message || "세션을 가져올 수 없습니다";
     console.error("exchangeCodeForSession error:", error);
-    if (isApp) {
-      return createAppReturnResponse(true, `오류: ${errorMsg}`);
-    }
     return NextResponse.redirect(new URL("/sign-in?error=exchange_failed", origin));
-  }
-
-  // 앱인 경우: 토큰을 서버에 임시 저장하고 앱으로 돌아가라고 안내
-  if (isApp && sessionId) {
-    const { access_token, refresh_token } = data.session;
-
-    // pending-session API에 토큰 저장
-    try {
-      await fetch(`${origin}/api/auth/pending-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId,
-          accessToken: access_token,
-          refreshToken: refresh_token,
-        }),
-      });
-    } catch (e) {
-      console.error("Failed to save pending session:", e);
-    }
-
-    return createAppReturnResponse(false);
-  }
-
-  // 앱인데 session_id가 없는 경우 (이전 방식 호환)
-  if (isApp) {
-    return createAppReturnResponse(false);
   }
 
   return NextResponse.redirect(new URL("/verify", origin));
