@@ -20,7 +20,14 @@ export default function DeepLinkHandler() {
   const handlingRef = useRef(false);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
+    alert(`[DEBUG 1] DeepLinkHandler 마운트, isNative: ${Capacitor.isNativePlatform()}`);
+
+    if (!Capacitor.isNativePlatform()) {
+      alert("[DEBUG 2] Native 아님 - 종료");
+      return;
+    }
+
+    alert("[DEBUG 3] Native 플랫폼 확인됨");
 
     const handleDeepLink = async (url: string) => {
       // 디버깅: 받은 URL 확인
@@ -67,13 +74,19 @@ export default function DeepLinkHandler() {
     };
 
     let sub: PluginListenerHandle | null = null;
+
+    alert("[DEBUG 4] 리스너 등록 시작");
+
     void App.addListener("appUrlOpen", ({ url }) => {
+      alert(`[DEBUG 5] appUrlOpen 이벤트! url: ${url?.substring(0, 50)}`);
       if (url) void handleDeepLink(url);
     }).then((handle) => {
       sub = handle;
+      alert("[DEBUG 6] appUrlOpen 리스너 등록 완료");
     });
 
     App.getLaunchUrl().then((result) => {
+      alert(`[DEBUG 7] getLaunchUrl 결과: ${result?.url?.substring(0, 50) || "null"}`);
       if (result?.url) void handleDeepLink(result.url);
     });
 
