@@ -50,54 +50,78 @@ async function exchangeCodeForTokens(code: string, codeVerifier: string, redirec
 }
 
 
-// 앱으로 돌아가라는 HTML 페이지 반환 (폴링 방식)
-function createAppReturnResponse(isError = false, errorMsg = "") {
+// 앱으로 토큰 전달하는 HTML 페이지 반환
+function createAppReturnResponse(isError = false, errorMsg = "", tokens?: { accessToken: string; refreshToken: string }) {
+  // 에러인 경우
+  if (isError) {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>로그인 실패</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+            .container { text-align: center; padding: 20px; }
+            h1 { font-size: 24px; margin-bottom: 16px; }
+            p { color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>로그인 실패</h1>
+            <p>${errorMsg || "다시 시도해주세요."}</p>
+          </div>
+        </body>
+      </html>
+    `;
+    return new NextResponse(html, { headers: { "Content-Type": "text/html" } });
+  }
+
+  // 성공인 경우: 딥링크로 토큰 전달
+  const deepLinkUrl = tokens
+    ? `buddyapp://auth?access_token=${encodeURIComponent(tokens.accessToken)}&refresh_token=${encodeURIComponent(tokens.refreshToken)}`
+    : "buddyapp://auth";
+
   const html = `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
-        <title>로그인 ${isError ? "실패" : "완료"}</title>
+        <title>로그인 완료</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background: #f5f5f5;
-          }
-          .container {
-            text-align: center;
-            padding: 20px;
-          }
+          body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+          .container { text-align: center; padding: 20px; }
           h1 { font-size: 24px; margin-bottom: 16px; }
           p { color: #666; margin-bottom: 24px; line-height: 1.6; }
-          .success-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-          }
+          .btn { display: inline-block; background: #7C3AED; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-size: 18px; font-weight: 600; }
+          .loading { font-size: 48px; margin-bottom: 20px; }
         </style>
       </head>
       <body>
         <div class="container">
-          ${isError
-            ? `<h1>로그인 실패</h1><p>${errorMsg || "다시 시도해주세요."}</p>`
-            : `<div class="success-icon">✅</div>
-               <h1>로그인 완료!</h1>
-               <p>이제 Safari를 닫고<br><strong>벗 앱으로 돌아가주세요.</strong></p>
-               <p style="font-size: 14px; color: #999;">앱에서 자동으로 로그인됩니다.</p>`
-          }
+          <div class="loading">⏳</div>
+          <h1>로그인 완료!</h1>
+          <p id="status">앱으로 이동 중...</p>
+          <a href="${deepLinkUrl}" class="btn" id="btn" style="display:none;">앱으로 돌아가기</a>
         </div>
+        <script>
+          // 딥링크로 앱 열기 시도
+          window.location.href = "${deepLinkUrl}";
+
+          // 2초 후에도 여기 있으면 버튼 표시
+          setTimeout(function() {
+            document.getElementById('status').textContent = '앱이 열리지 않으면 버튼을 눌러주세요';
+            document.getElementById('btn').style.display = 'inline-block';
+            document.querySelector('.loading').textContent = '✅';
+          }, 2000);
+        </script>
       </body>
     </html>
   `;
-  return new NextResponse(html, {
-    headers: { "Content-Type": "text/html" },
-  });
+  return new NextResponse(html, { headers: { "Content-Type": "text/html" } });
 }
 
 export async function GET(request: NextRequest) {
@@ -133,18 +157,11 @@ export async function GET(request: NextRequest) {
         return createAppReturnResponse(true, "토큰을 받지 못했습니다.");
       }
 
-      // pending-session API에 토큰 저장
-      await fetch(`${origin}/api/auth/pending-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId,
-          accessToken: tokenData.access_token,
-          refreshToken: tokenData.refresh_token,
-        }),
+      // 딥링크로 토큰 전달
+      return createAppReturnResponse(false, "", {
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
       });
-
-      return createAppReturnResponse(false);
     } catch (e) {
       console.error("App auth error:", e);
       const errorMsg = e instanceof Error ? e.message : String(e);
