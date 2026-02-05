@@ -23,19 +23,33 @@ export default function DeepLinkHandler() {
     if (!Capacitor.isNativePlatform()) return;
 
     const handleDeepLink = async (url: string) => {
-      const parsed = parseAuthTokens(url);
-      if (!parsed) return;
+      // 디버깅: 받은 URL 확인
+      alert(`[DEBUG] 딥링크 수신: ${url.substring(0, 100)}...`);
 
-      const { accessToken, refreshToken, error } = parsed;
-      if (error) {
-        alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+      const parsed = parseAuthTokens(url);
+      if (!parsed) {
+        alert("[DEBUG] 파싱 실패: buddyapp://auth가 아님");
         return;
       }
 
-      if (!accessToken || !refreshToken) return;
-      if (handlingRef.current) return;
+      const { accessToken, refreshToken, error } = parsed;
+      if (error) {
+        alert(`[DEBUG] OAuth 에러: ${error}`);
+        return;
+      }
+
+      if (!accessToken || !refreshToken) {
+        alert(`[DEBUG] 토큰 없음 - access: ${!!accessToken}, refresh: ${!!refreshToken}`);
+        return;
+      }
+
+      if (handlingRef.current) {
+        alert("[DEBUG] 이미 처리 중");
+        return;
+      }
       handlingRef.current = true;
 
+      alert("[DEBUG] setSession 시작...");
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -43,10 +57,11 @@ export default function DeepLinkHandler() {
 
       if (sessionError) {
         handlingRef.current = false;
-        alert("세션 설정 중 오류가 발생했습니다.");
+        alert(`[DEBUG] setSession 실패: ${sessionError.message}`);
         return;
       }
 
+      alert("[DEBUG] 세션 설정 완료! /verify로 이동합니다.");
       // 페이지 새로고침으로 세션 확실히 반영
       window.location.href = "/verify";
     };
