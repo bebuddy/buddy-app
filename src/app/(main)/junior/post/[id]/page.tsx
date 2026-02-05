@@ -1,10 +1,11 @@
 // app/(main)/junior/post/[id]/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { Chip } from "@/components/common/Chip";
+import { track } from "@/lib/mixpanel";
 
 const Brand = "#6163FF";
 
@@ -117,6 +118,39 @@ export default function Page() {
 
   const router = useRouter();
 
+  // Mixpanel: post_viewed & post_exited (체류 시간)
+  const hasViewedRef = useRef(false);
+  const hasExitedRef = useRef(false);
+  const enterTimeRef = useRef<number>(0);
+
+  const sendExit = useCallback(() => {
+    if (hasExitedRef.current || !id) return;
+    hasExitedRef.current = true;
+    const duration = Math.round((Date.now() - enterTimeRef.current) / 1000);
+    track("post_exited", { post_id: id, post_type: "junior", duration_seconds: duration });
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || hasViewedRef.current) return;
+    hasViewedRef.current = true;
+    enterTimeRef.current = Date.now();
+    track("post_viewed", { post_id: id, post_type: "junior" });
+
+    const onVisChange = () => {
+      if (document.visibilityState === "hidden") sendExit();
+    };
+    const onBeforeUnload = () => sendExit();
+
+    document.addEventListener("visibilitychange", onVisChange);
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    return () => {
+      sendExit();
+      document.removeEventListener("visibilitychange", onVisChange);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [id, sendExit]);
+
   useEffect(() => {
     let active = true;
     if (!id) return;
@@ -181,7 +215,15 @@ export default function Page() {
         return;
       }
 
-      setComments((prev) => [json.data, ...prev]);
+      setComments((prev) => {
+        const next = [json.data, ...prev];
+        track("comment_created", {
+          post_id: id,
+          post_type: "junior",
+          user_comment_count: next.length,
+        });
+        return next;
+      });
       setCText("");
     } catch (error) {
       console.error("댓글 작성 오류:", error);
@@ -213,6 +255,7 @@ export default function Page() {
       if (!res.ok || !json?.success || !json?.data?.id) {
         throw new Error(json?.message ?? "채팅을 시작할 수 없습니다.");
       }
+      track("chat_started", { post_id: post.id, post_type: "junior", thread_id: json.data.id });
       router.push(`/chat/${json.data.id}`);
     } catch (error) {
       console.error(error);

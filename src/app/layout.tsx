@@ -1,5 +1,6 @@
-import { Noto_Sans_KR } from "next/font/google"; 
+import { Noto_Sans_KR } from "next/font/google";
 import "@/styles/globals.css";
+import MixpanelProvider from "@/components/MixpanelProvider";
 
 const notoSans = Noto_Sans_KR({
   subsets: ["latin"],
@@ -33,9 +34,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko">
       <body className="min-h-dvh bg-neutral-50 text-neutral-900 antialiased font-sans">
-        <div className="mx-auto min-h-dvh flex flex-col w-full max-w-[768px] bg-white shadow-xl">
-          <main className="flex-1">{children}</main>
-        </div>
+        <MixpanelProvider>
+          <div className="mx-auto min-h-dvh flex flex-col w-full max-w-[768px] bg-white shadow-xl">
+            <main className="flex-1">{children}</main>
+          </div>
+        </MixpanelProvider>
       </body>
     </html>
   );

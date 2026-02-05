@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import OnboardingNav from "@/components/OnboardingNav";
 import OnboardingTopbar from "@/components/OnboardingTopbar";
+import { track, identify } from "@/lib/mixpanel";
 
 // ===== 색상 / 상수 =====
 const BRAND = "#6163FF";
@@ -79,6 +80,15 @@ function SignUpPageContent() {
   // 유저 정보
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Mixpanel: sign_up_started (마운트 시 1회)
+  const hasTrackedStart = useRef(false);
+  useEffect(() => {
+    if (!hasTrackedStart.current) {
+      track("sign_up_started");
+      hasTrackedStart.current = true;
+    }
+  }, []);
 
   // 1. 기존 유저 정보 불러오기
   useEffect(() => {
@@ -205,6 +215,15 @@ function SignUpPageContent() {
         alert("회원 정보 업데이트 실패");
         return;
       }
+    }
+
+    // Mixpanel: 스텝 완료 추적
+    const stepNames = ["location", "age", "gender", "profile", "phone"];
+    track("sign_up_step", { step: step, step_name: stepNames[step] });
+
+    if (step === 4) {
+      if (authId) identify(authId);
+      track("sign_up_completed");
     }
 
     // 단계 이동

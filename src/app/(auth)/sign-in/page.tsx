@@ -1,12 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
+import { track } from "@/lib/mixpanel";
 
 export default function SigninPage() {
+    const hasTracked = useRef(false);
+    useEffect(() => {
+        if (hasTracked.current) return;
+        hasTracked.current = true;
+        track("sign_in_viewed");
+    }, []);
+
     // ✅ Google 로그인 함수 (Route Handler 경유)
     const handleGoogleSignin = async () => {
         try {
+            track("sign_in_clicked", { provider: "google" });
             window.location.href = "/api/auth/login?provider=google";
         } catch (error) {
             console.error("Google login error:", error);

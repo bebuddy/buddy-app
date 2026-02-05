@@ -1,7 +1,7 @@
 // src/app/(main)/junior/register/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import RegisterActionBar from "@/components/RegisterActionBar";
@@ -13,6 +13,7 @@ import PriceInput from "@/components/PriceInput";
 import PhotoUpload from "@/components/PhotoUpload";
 import type { RegisterJuniorReq } from "@/types/postType";
 import { BudgetType, ClassType, GenderType, TimeType } from "@/types/postType";
+import { track } from "@/lib/mixpanel";
 
 // (백엔드 연동은 나중에 붙일 예정이므로 타입만 지역 선언)
 type Unit = "시간" | "건당";
@@ -86,6 +87,62 @@ export default function WritePage() {
 
   const [fileKeys, setFileKeys] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Mixpanel: register_started & register_exited
+  const hasTrackedRef = useRef(false);
+  const hasExitedRef = useRef(false);
+  const enterTimeRef = useRef<number>(0);
+
+  const formRef = useRef({ title, desc, category, level, mentorGender, mentorTypes, meetPref, days, times, price, unit, negotiable });
+  formRef.current = { title, desc, category, level, mentorGender, mentorTypes, meetPref, days, times, price, unit, negotiable };
+
+  const getFilledFields = useCallback(() => {
+    const f = formRef.current;
+    const filled: string[] = [];
+    if (f.category) filled.push("category");
+    if (f.title.trim()) filled.push("title");
+    if (f.desc.trim()) filled.push("description");
+    if (f.level) filled.push("level");
+    if (f.mentorGender) filled.push("gender_pref");
+    if (f.mentorTypes.length > 0) filled.push("senior_type");
+    if (f.meetPref) filled.push("meet_pref");
+    if (f.days.length > 0) filled.push("days");
+    if (f.times.length > 0) filled.push("times");
+    if (f.negotiable || f.price.trim()) filled.push("price");
+    return filled;
+  }, []);
+
+  const sendExit = useCallback(() => {
+    if (hasExitedRef.current) return;
+    hasExitedRef.current = true;
+    const duration = Math.round((Date.now() - enterTimeRef.current) / 1000);
+    const filled = getFilledFields();
+    track("register_exited", {
+      register_type: "junior",
+      duration_seconds: duration,
+      filled_fields: filled,
+      filled_count: filled.length,
+      total_fields: 10,
+    });
+  }, [getFilledFields]);
+
+  useEffect(() => {
+    if (hasTrackedRef.current) return;
+    hasTrackedRef.current = true;
+    enterTimeRef.current = Date.now();
+    track("register_started", { register_type: "junior" });
+
+    const onVisChange = () => { if (document.visibilityState === "hidden") sendExit(); };
+    const onBeforeUnload = () => sendExit();
+    document.addEventListener("visibilitychange", onVisChange);
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    return () => {
+      sendExit();
+      document.removeEventListener("visibilitychange", onVisChange);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [sendExit]);
 
   // 협의 선택 로직
   function handleDaysChange(next: string[]) {
@@ -196,6 +253,14 @@ export default function WritePage() {
       if (!postId) {
         throw new Error("생성된 게시글 ID를 찾을 수 없습니다.");
       }
+
+      track("junior_post_created", {
+        user_id: userId,
+        post_id: postId,
+        category,
+        level,
+        budget_type: negotiable ? "협의" : (unit ?? "시간"),
+      });
 
       router.replace(`/junior/post/${postId}`);
     } catch (error) {

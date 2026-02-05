@@ -1,7 +1,7 @@
 // src/app/(main)/expert/register/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import RegisterActionBar from "@/components/RegisterActionBar";
 import Disclosure from "@/components/Disclosure";
 import LabeledInput from "@/components/LabeledInput";
@@ -10,6 +10,7 @@ import ChipGroup from "@/components/ChipGroup";
 import PriceInput from "@/components/PriceInput";
 import PhotoUpload from "@/components/PhotoUpload";
 import { useRouter } from "next/navigation";
+import { track } from "@/lib/mixpanel";
 
 const LEVELS = ["고수", "초고수", "신"] as const;
 const GENDER_PREF = ["여자 후배님", "남자 후배님", "상관없음"] as const;
@@ -76,6 +77,63 @@ export default function ExpertRegisterPage() {
   const [unit, setUnit] = useState<Unit | null>(null);
   const [negotiable, setNegotiable] = useState(false);
   const [fileKeys, setFileKeys] = useState<string[]>([]);
+
+  // Mixpanel: register_started & register_exited
+  const hasTrackedRef = useRef(false);
+  const hasExitedRef = useRef(false);
+  const enterTimeRef = useRef<number>(0);
+
+  // ref로 최신 폼 상태 접근 (이벤트 리스너에서 사용)
+  const formRef = useRef({ title, desc, category, level, gender, mentorTypes, meetPref, days, times, price, unit, negotiable });
+  formRef.current = { title, desc, category, level, gender, mentorTypes, meetPref, days, times, price, unit, negotiable };
+
+  const getFilledFields = useCallback(() => {
+    const f = formRef.current;
+    const filled: string[] = [];
+    if (f.category) filled.push("category");
+    if (f.title.trim()) filled.push("title");
+    if (f.desc.trim()) filled.push("description");
+    if (f.level) filled.push("level");
+    if (f.gender) filled.push("gender_pref");
+    if (f.mentorTypes.length > 0) filled.push("junior_type");
+    if (f.meetPref) filled.push("meet_pref");
+    if (f.days.length > 0) filled.push("days");
+    if (f.times.length > 0) filled.push("times");
+    if (f.negotiable || f.price.trim()) filled.push("price");
+    return filled;
+  }, []);
+
+  const sendExit = useCallback(() => {
+    if (hasExitedRef.current) return;
+    hasExitedRef.current = true;
+    const duration = Math.round((Date.now() - enterTimeRef.current) / 1000);
+    const filled = getFilledFields();
+    track("register_exited", {
+      register_type: "senior",
+      duration_seconds: duration,
+      filled_fields: filled,
+      filled_count: filled.length,
+      total_fields: 10,
+    });
+  }, [getFilledFields]);
+
+  useEffect(() => {
+    if (hasTrackedRef.current) return;
+    hasTrackedRef.current = true;
+    enterTimeRef.current = Date.now();
+    track("register_started", { register_type: "senior" });
+
+    const onVisChange = () => { if (document.visibilityState === "hidden") sendExit(); };
+    const onBeforeUnload = () => sendExit();
+    document.addEventListener("visibilitychange", onVisChange);
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    return () => {
+      sendExit();
+      document.removeEventListener("visibilitychange", onVisChange);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [sendExit]);
 
   const isValid = useMemo(() => {
     const hasTitle = title.trim().length > 0;
@@ -183,8 +241,17 @@ export default function ExpertRegisterPage() {
         return;
       }
 
-      // 5) 성공 시 상세 페이지로 이동
+      // 5) 성공 시 이벤트 추적 & 상세 페이지로 이동
       const postId = result.data?.id;
+      track("senior_post_created", {
+        user_id: userId,
+        post_id: postId ?? null,
+        category: category ?? "",
+        level: level ?? "",
+        mentoring_way: meetPref ?? "",
+        budget_type: negotiable ? "협의" : (unit ?? "시간"),
+      });
+
       if (postId) {
         router.push(`/expert/post/${postId}`);
       } else {

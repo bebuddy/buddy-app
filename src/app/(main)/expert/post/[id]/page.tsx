@@ -1,15 +1,26 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { Chip } from "@/components/common/Chip";
+import { track } from "@/lib/mixpanel";
 
 const Brand = "#FF883F";
 
 const SectionDivider = ({ className = "" }: { className?: string }) => (
   <div className={`border-t border-neutral-200 ${className}`} />
 );
+
+function formatAgo(createdAt: string) {
+  const ts = new Date(createdAt).getTime();
+  const diff = Date.now() - ts;
+  const h = Math.floor(diff / 3600000);
+  if (h <= 0) return "방금 전";
+  if (h < 24) return `${h}시간 전`;
+  const d = Math.floor(h / 24);
+  return `${d}일 전`;
+}
 
 
 type SeniorPost = {
@@ -49,6 +60,39 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
   const [isStartingChat, setIsStartingChat] = useState(false);
 
+  // Mixpanel: post_viewed & post_exited (체류 시간)
+  const hasViewedRef = useRef(false);
+  const hasExitedRef = useRef(false);
+  const enterTimeRef = useRef<number>(0);
+
+  const sendExit = useCallback(() => {
+    if (hasExitedRef.current || !id) return;
+    hasExitedRef.current = true;
+    const duration = Math.round((Date.now() - enterTimeRef.current) / 1000);
+    track("post_exited", { post_id: id, post_type: "senior", duration_seconds: duration });
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || hasViewedRef.current) return;
+    hasViewedRef.current = true;
+    enterTimeRef.current = Date.now();
+    track("post_viewed", { post_id: id, post_type: "senior" });
+
+    const onVisChange = () => {
+      if (document.visibilityState === "hidden") sendExit();
+    };
+    const onBeforeUnload = () => sendExit();
+
+    document.addEventListener("visibilitychange", onVisChange);
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    return () => {
+      sendExit();
+      document.removeEventListener("visibilitychange", onVisChange);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [id, sendExit]);
+
   useEffect(() => {
     let active = true;
     if (!id) return;
@@ -70,6 +114,77 @@ export default function Page() {
       active = false;
     };
   }, [id]);
+
+  // 댓글
+  type Comment = {
+    id: string;
+    content: string;
+    created_at: string;
+    user: {
+      id: string;
+      nick_name: string | null;
+      profile_image: string | null;
+    } | null;
+  };
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [cText, setCText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchComments = async () => {
+      try {
+        const res = await fetch(`/api/comments?postId=${id}&postType=senior`);
+        const json = await res.json();
+        if (res.ok && json?.success) {
+          setComments(json.data ?? []);
+        }
+      } catch (error) {
+        console.error("댓글 조회 오류:", error);
+      }
+    };
+    fetchComments();
+  }, [id]);
+
+  async function addComment() {
+    const text = cText.trim();
+    if (!text || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: id,
+          postType: "senior",
+          content: text,
+        }),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json?.success) {
+        alert(json?.message ?? "댓글 작성에 실패했습니다.");
+        return;
+      }
+
+      setComments((prev) => {
+        const next = [json.data, ...prev];
+        track("comment_created", {
+          post_id: id,
+          post_type: "senior",
+          user_comment_count: next.length,
+        });
+        return next;
+      });
+      setCText("");
+    } catch (error) {
+      console.error("댓글 작성 오류:", error);
+      alert("댓글 작성에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const paragraphs = useMemo(() => (post?.content ? post.content.split("\n").filter(Boolean) : []), [post?.content]);
   const displayName = post?.user?.nick_name ?? post?.user?.name ?? "선배";
@@ -181,6 +296,60 @@ export default function Page() {
 
           <SectionDivider className="mt-6" />
 
+          {/* 댓글 */}
+          <div className="mt-5">
+            <div className="font-bold-16 text-neutral-900">댓글 {comments.length > 0 && `(${comments.length})`}</div>
+
+            <div className="mt-3 flex items-stretch gap-2">
+              <textarea
+                value={cText}
+                onChange={(e) => setCText(e.target.value)}
+                placeholder="댓글을 입력하세요"
+                rows={3}
+                className="flex-1 px-3 py-2 rounded-lg border border-neutral-300 outline-none resize-none"
+              />
+              <button
+                onClick={addComment}
+                disabled={isSubmitting}
+                className="h-[44px] px-4 rounded-lg font-bold text-white self-end disabled:opacity-50"
+                style={{ backgroundColor: Brand }}
+              >
+                {isSubmitting ? "..." : "등록"}
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {comments.length === 0 ? (
+                <div className="font-regular-16 text-neutral-500">아직 댓글이 없습니다.</div>
+              ) : (
+                comments.map((c) => (
+                  <div key={c.id} className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-neutral-200 shrink-0 overflow-hidden flex items-center justify-center">
+                      {c.user?.profile_image ? (
+                        <img src={c.user.profile_image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <svg className="w-5 h-5 text-neutral-400" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold-14 text-neutral-900">
+                        {c.user?.nick_name ?? "익명"}
+                        <span className="ml-2 font-regular-12 text-neutral-400">{formatAgo(c.created_at)}</span>
+                      </div>
+                      <div className="mt-1 font-regular-14 text-neutral-900 whitespace-pre-wrap">
+                        {c.content}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <SectionDivider className="mt-6" />
+
           {/* 원하는 후배 스타일 */}
           <div className="mt-6">
             <div className="mt-3 flex flex-col gap-3">
@@ -233,6 +402,7 @@ export default function Page() {
                   if (!res.ok || !json?.success || !json?.data?.id) {
                     throw new Error(json?.message ?? "채팅을 시작할 수 없습니다.");
                   }
+                  track("chat_started", { post_id: post.id, post_type: "senior", thread_id: json.data.id });
                   router.push(`/chat/${json.data.id}`);
                 } catch (err) {
                   console.error(err);
