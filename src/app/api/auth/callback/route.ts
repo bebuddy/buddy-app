@@ -92,8 +92,10 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.session) {
+    const errorMsg = error?.message || "세션을 가져올 수 없습니다";
+    console.error("exchangeCodeForSession error:", error);
     if (isApp) {
-      return createAppReturnResponse(true, "로그인 처리 중 오류가 발생했습니다.");
+      return createAppReturnResponse(true, `오류: ${errorMsg}`);
     }
     return NextResponse.redirect(new URL("/sign-in?error=exchange_failed", origin));
   }
