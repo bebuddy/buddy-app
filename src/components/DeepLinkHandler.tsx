@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
 import type { PluginListenerHandle } from "@capacitor/core";
 import { App } from "@capacitor/app";
@@ -18,7 +17,6 @@ function parseAuthTokens(url: string) {
 }
 
 export default function DeepLinkHandler() {
-  const router = useRouter();
   const handlingRef = useRef(false);
 
   useEffect(() => {
@@ -49,7 +47,8 @@ export default function DeepLinkHandler() {
         return;
       }
 
-      router.replace("/verify");
+      // 페이지 새로고침으로 세션 확실히 반영
+      window.location.href = "/verify";
     };
 
     let sub: PluginListenerHandle | null = null;
@@ -66,7 +65,7 @@ export default function DeepLinkHandler() {
     return () => {
       if (sub) void sub.remove();
     };
-  }, [router]);
+  }, []);
 
   return null;
 }
