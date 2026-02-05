@@ -26,7 +26,7 @@ async function createSupabaseClient() {
 
 
 // 앱으로 딥링크 리다이렉트하는 HTML 페이지 반환
-function createDeepLinkResponse(deepLinkUrl: string, isError = false) {
+function createDeepLinkResponse(deepLinkUrl: string, webFallbackUrl: string, isError = false) {
   const html = `
     <!DOCTYPE html>
     <html>
@@ -60,18 +60,40 @@ function createDeepLinkResponse(deepLinkUrl: string, isError = false) {
             text-decoration: none;
             font-size: 18px;
             font-weight: 600;
+            margin-bottom: 12px;
           }
+          .btn-secondary {
+            display: inline-block;
+            background: #666;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+          }
+          .hidden { display: none; }
         </style>
       </head>
       <body>
         <div class="container">
           <h1>${isError ? "로그인 실패" : "로그인 완료!"}</h1>
-          <p>${isError ? "다시 시도해주세요." : "아래 버튼을 눌러 앱으로 돌아가세요."}</p>
-          <a href="${deepLinkUrl}" class="btn">앱으로 돌아가기</a>
+          <p id="status">${isError ? "다시 시도해주세요." : "앱으로 이동 중..."}</p>
+          <a href="${deepLinkUrl}" class="btn" id="mainBtn">앱으로 돌아가기</a>
+          <br><br>
+          <a href="${webFallbackUrl}" class="btn-secondary" id="fallbackBtn">앱이 안 열리면 여기를 클릭</a>
         </div>
         <script>
-          // 자동으로 시도하되, 실패하면 버튼 사용
-          setTimeout(() => { window.location.href = "${deepLinkUrl}"; }, 100);
+          // 딥링크 시도
+          var deepLink = "${deepLinkUrl}";
+          var webFallback = "${webFallbackUrl}";
+
+          // 즉시 딥링크 시도
+          window.location.href = deepLink;
+
+          // 3초 후에도 페이지가 보이면 딥링크 실패로 간주
+          setTimeout(function() {
+            document.getElementById('status').textContent = '앱이 열리지 않으면 아래 버튼을 눌러주세요';
+          }, 2000);
         </script>
       </body>
     </html>
@@ -88,7 +110,11 @@ export async function GET(request: NextRequest) {
 
   if (!code) {
     if (isApp) {
-      return createDeepLinkResponse("buddyapp://auth?error=missing_code", true);
+      return createDeepLinkResponse(
+        "buddyapp://auth?error=missing_code",
+        `${origin}/sign-in?error=missing_code`,
+        true
+      );
     }
     return NextResponse.redirect(new URL("/sign-in?error=missing_code", origin));
   }
@@ -98,7 +124,11 @@ export async function GET(request: NextRequest) {
 
   if (error || !data.session) {
     if (isApp) {
-      return createDeepLinkResponse("buddyapp://auth?error=exchange_failed", true);
+      return createDeepLinkResponse(
+        "buddyapp://auth?error=exchange_failed",
+        `${origin}/sign-in?error=exchange_failed`,
+        true
+      );
     }
     return NextResponse.redirect(new URL("/sign-in?error=exchange_failed", origin));
   }
@@ -106,10 +136,14 @@ export async function GET(request: NextRequest) {
   // 앱인 경우 딥링크로 토큰 전달
   if (isApp) {
     const { access_token, refresh_token } = data.session;
-    // 토큰에 특수문자가 있을 수 있으므로 URL 인코딩
-    return createDeepLinkResponse(
-      `buddyapp://auth?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`
-    );
+    const encodedAccess = encodeURIComponent(access_token);
+    const encodedRefresh = encodeURIComponent(refresh_token);
+
+    // 딥링크와 웹 폴백 URL 모두 제공
+    const deepLinkUrl = `buddyapp://auth?access_token=${encodedAccess}&refresh_token=${encodedRefresh}`;
+    const webFallbackUrl = `${origin}/auth-callback?access_token=${encodedAccess}&refresh_token=${encodedRefresh}`;
+
+    return createDeepLinkResponse(deepLinkUrl, webFallbackUrl, false);
   }
 
   return NextResponse.redirect(new URL("/verify", origin));

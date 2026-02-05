@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 function AuthHandler() {
-    const router = useRouter();
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -16,7 +15,7 @@ function AuthHandler() {
 
             if (error) {
                 alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
-                router.push("/sign-in");
+                window.location.href = "/sign-in";
                 return;
             }
 
@@ -28,18 +27,19 @@ function AuthHandler() {
 
                 if (sessionError) {
                     alert("세션 설정 중 오류가 발생했습니다.");
-                    router.push("/sign-in");
+                    window.location.href = "/sign-in";
                     return;
                 }
 
-                router.push("/verify");
+                // 페이지 새로고침으로 세션 확실히 반영
+                window.location.href = "/verify";
             } else {
-                router.push("/sign-in");
+                window.location.href = "/sign-in";
             }
         };
 
         handleAuth();
-    }, [router, searchParams]);
+    }, [searchParams]);
 
     return (
         <div className="flex items-center justify-center min-h-dvh">
