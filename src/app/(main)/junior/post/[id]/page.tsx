@@ -276,9 +276,13 @@ export default function Page() {
           >
             <ChevronLeft className="w-6 h-6 text-neutral-900" />
           </button>
-          <div className="text-[17px] text-neutral-700">
-            {notFoundMsg ?? "게시글을 찾을 수 없어요."}
-          </div>
+          {notFoundMsg ? (
+            <div className="text-[17px] text-neutral-700">{notFoundMsg}</div>
+          ) : (
+            <div className="flex justify-center py-10">
+              <div className="w-8 h-8 border-4 border-neutral-200 border-t-[#6163FF] rounded-full animate-spin" />
+            </div>
+          )}
         </div>
       </div>
     );

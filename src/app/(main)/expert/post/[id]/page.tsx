@@ -206,9 +206,13 @@ export default function Page() {
           >
             <ChevronLeft className="w-6 h-6 text-neutral-900" />
           </button>
-          <div className="text-center text-neutral-500">
-            {error ?? "해당 고수를 찾을 수 없습니다."}
-          </div>
+          {error ? (
+            <div className="text-center text-neutral-500">{error}</div>
+          ) : (
+            <div className="flex justify-center py-10">
+              <div className="w-8 h-8 border-4 border-neutral-200 border-t-[#FF883F] rounded-full animate-spin" />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -242,7 +246,6 @@ export default function Page() {
             </div>
             <div className="mt-4 flex gap-2">
               <Chip solid>{post.category}</Chip>
-              <Chip solid color="primary">{post.level}</Chip>
             </div>
           </div>
 
@@ -351,12 +354,14 @@ export default function Page() {
           <SectionDivider className="mt-6" />
 
           {/* 원하는 후배 스타일 */}
-          <div className="mt-6">
-            <div className="mt-3 flex flex-col gap-3">
-              {(post.junior_type ?? []).map((j, i) => <Chip textSize={18} key={i}>{j}</Chip>)}
+          {(post.junior_type ?? []).filter(Boolean).length > 0 && (
+            <div className="mt-6">
+              <div className="mt-3 flex flex-col gap-3">
+                {(post.junior_type ?? []).filter(Boolean).map((j, i) => <Chip textSize={18} key={i}>{j}</Chip>)}
+              </div>
+              <div className="font-medium-20 text-neutral-900 mt-5">후배님을 만나고 싶어요.</div>
             </div>
-            <div className="font-medium-20 text-neutral-900 mt-5">후배님을 만나고 싶어요.</div>
-          </div>
+          )}
 
           <SectionDivider className="mt-6" />
 
@@ -364,12 +369,16 @@ export default function Page() {
           <div className="mt-6">
             <div className="font-medium-20 text-neutral-900">수업은...</div>
             <div className="mt-3 flex flex-col flex-wrap gap-3">
-              <div className="flex gap-2">
-                {(post.days ?? []).map((d, i) => <Chip textSize={18} key={i}>{d}</Chip>)}
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {(post.times ?? []).map((t, i) => <Chip  textSize={18} key={i}>{t}</Chip>)}
-              </div>
+              {(post.days ?? []).filter(Boolean).length > 0 && (
+                <div className="flex gap-2">
+                  {(post.days ?? []).filter(Boolean).map((d, i) => <Chip textSize={18} key={i}>{d}</Chip>)}
+                </div>
+              )}
+              {(post.times ?? []).filter(Boolean).length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {(post.times ?? []).filter(Boolean).map((t, i) => <Chip textSize={18} key={i}>{t}</Chip>)}
+                </div>
+              )}
               {post.class_type && <Chip textSize={18}>{post.class_type}</Chip>}
             </div>
           </div>
