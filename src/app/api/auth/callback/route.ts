@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 async function createSupabaseClient() {
-  // TypeScript가 Promise 반환으로 간주하는 케이스를 피하기 위해 await 사용
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -28,16 +27,31 @@ async function createSupabaseClient() {
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const origin = request.nextUrl.origin;
+  const isApp = request.nextUrl.searchParams.get("app") === "true";
 
   if (!code) {
+    if (isApp) {
+      return NextResponse.redirect("buddyapp://auth?error=missing_code");
+    }
     return NextResponse.redirect(new URL("/sign-in?error=missing_code", origin));
   }
 
   const supabase = await createSupabaseClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error) {
+  if (error || !data.session) {
+    if (isApp) {
+      return NextResponse.redirect("buddyapp://auth?error=exchange_failed");
+    }
     return NextResponse.redirect(new URL("/sign-in?error=exchange_failed", origin));
+  }
+
+  // 앱인 경우 딥링크로 토큰 전달
+  if (isApp) {
+    const { access_token, refresh_token } = data.session;
+    return NextResponse.redirect(
+      `buddyapp://auth?access_token=${access_token}&refresh_token=${refresh_token}`
+    );
   }
 
   return NextResponse.redirect(new URL("/verify", origin));
