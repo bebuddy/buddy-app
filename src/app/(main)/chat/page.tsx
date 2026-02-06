@@ -9,7 +9,6 @@ import TopBar from "@/components/TopBar";
 import ChatTabs, { ChatTabType } from "@/components/ChatTabs";
 import ChatRoomList from "@/components/ChatRoomList";
 import { supabase } from "@/lib/supabase";
-import { apiFetch } from "@/lib/apiFetch";
 
 export default function ChatPage() {
   const [activeTab, setActiveTab] = useState<ChatTabType>("ALL");
@@ -29,7 +28,7 @@ export default function ChatPage() {
           return;
         }
 
-        const res = await apiFetch("/api/messages/my-threads", { cache: "no-store" });
+        const res = await fetch("/api/messages/my-threads", { cache: "no-store" });
         const json = await res.json();
         if (!res.ok || !json?.success) {
           throw new Error(json?.message ?? "대화 목록을 불러오지 못했습니다.");

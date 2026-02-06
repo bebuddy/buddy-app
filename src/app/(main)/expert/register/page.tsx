@@ -11,7 +11,6 @@ import PriceInput from "@/components/PriceInput";
 import PhotoUpload from "@/components/PhotoUpload";
 import { useRouter } from "next/navigation";
 import { track } from "@/lib/mixpanel";
-import { apiFetch } from "@/lib/apiFetch";
 
 const LEVELS = ["고수", "초고수", "신"] as const;
 const GENDER_PREF = ["여자 후배님", "남자 후배님", "상관없음"] as const;
@@ -169,7 +168,7 @@ export default function ExpertRegisterPage() {
     // 1) 사용자 정보 조회
     let userId: string | null = null;
     try {
-      const userRes = await apiFetch("/api/users/me");
+      const userRes = await fetch("/api/users/me");
       if (userRes.ok) {
         const userData = await userRes.json();
         userId = userData?.data?.id ?? null;
@@ -229,7 +228,7 @@ export default function ExpertRegisterPage() {
 
     // 4) API 호출
     try {
-      const res = await apiFetch("/api/posts/senior", {
+      const res = await fetch("/api/posts/senior", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),

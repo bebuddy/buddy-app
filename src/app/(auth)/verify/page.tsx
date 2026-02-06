@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function VerifyPage() {
   const router = useRouter();
-  const handlingRef = useRef(false);
 
   useEffect(() => {
-    const verifyUser = async (authId: string) => {
+    const verify = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return router.push("/signin");
+
+      const authId = user.id;
+
       const { data: existing, error: selectErr } = await supabase
         .from("users")
         .select("id, status")
@@ -17,11 +21,13 @@ export default function VerifyPage() {
         .single();
 
       if (selectErr && selectErr.code !== "PGRST116") {
-        console.error("[verify] users select error:", selectErr);
+        alert("서버 오류가 발생했습니다.");
         return;
       }
 
+      console.log(existing)
       if (!existing) {
+        // 신규 유저 insert
         const { error: insertErr } = await supabase
           .from("users")
           .insert({
@@ -30,7 +36,8 @@ export default function VerifyPage() {
             status: "PENDING",
           });
         if (insertErr) {
-          console.error("[verify] users insert error:", insertErr);
+          console.error(insertErr);
+          alert("회원 생성 중 오류가 발생했습니다.");
           return;
         }
         router.push(`/sign-up?auth_id=${authId}`);
@@ -41,26 +48,7 @@ export default function VerifyPage() {
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event !== "INITIAL_SESSION" && event !== "SIGNED_IN") return;
-        if (handlingRef.current) return;
-        handlingRef.current = true;
-
-        const user = session?.user;
-        if (!user) {
-          router.push("/sign-in");
-          return;
-        }
-
-        // setTimeout으로 _initialize() 체인을 끊어야 deadlock 방지
-        // onAuthStateChange 콜백은 _initialize() 내부에서 await되므로
-        // 여기서 supabase DB 쿼리를 하면 initializePromise 대기 → deadlock
-        setTimeout(() => verifyUser(user.id), 0);
-      },
-    );
-
-    return () => subscription.unsubscribe();
+    verify();
   }, [router]);
 
   return (

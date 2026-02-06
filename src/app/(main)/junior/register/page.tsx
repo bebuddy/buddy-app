@@ -14,7 +14,6 @@ import PhotoUpload from "@/components/PhotoUpload";
 import type { RegisterJuniorReq } from "@/types/postType";
 import { BudgetType, ClassType, GenderType, TimeType } from "@/types/postType";
 import { track } from "@/lib/mixpanel";
-import { apiFetch } from "@/lib/apiFetch";
 
 // (백엔드 연동은 나중에 붙일 예정이므로 타입만 지역 선언)
 type Unit = "시간" | "건당";
@@ -206,7 +205,7 @@ export default function WritePage() {
     try {
       setIsSubmitting(true);
 
-      const meRes = await apiFetch("/api/users/me", { cache: "no-store" });
+      const meRes = await fetch("/api/users/me", { cache: "no-store" });
       const meJson = await meRes.json();
       if (!meRes.ok || !meJson?.success) {
         throw new Error(meJson?.message ?? "로그인이 필요합니다.");
@@ -240,7 +239,7 @@ export default function WritePage() {
         fileKeys,
       };
 
-      const res = await apiFetch("/api/posts/junior", {
+      const res = await fetch("/api/posts/junior", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

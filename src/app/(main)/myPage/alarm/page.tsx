@@ -5,7 +5,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import AlarmItem from "@/components/AlarmItem"; // 방금 만든 컴포넌트
-import { apiFetch } from "@/lib/apiFetch";
 
 type NotificationItem = {
   id: string;
@@ -40,7 +39,7 @@ export default function AlarmPage() {
       if (cursorRef.current) params.set("cursor", cursorRef.current);
       params.set("limit", "20");
 
-      const res = await apiFetch(`/api/notifications?${params.toString()}`, { cache: "no-store" });
+      const res = await fetch(`/api/notifications?${params.toString()}`, { cache: "no-store" });
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.message ?? "알림을 불러오지 못했습니다.");
 
@@ -68,7 +67,7 @@ export default function AlarmPage() {
   // 2. 알림 클릭 시 '읽음' 처리 (상태 업데이트)
   const handleMarkAsRead = async (id: string) => {
     try {
-      const res = await apiFetch("/api/notifications/mark-read", {
+      const res = await fetch("/api/notifications/mark-read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),

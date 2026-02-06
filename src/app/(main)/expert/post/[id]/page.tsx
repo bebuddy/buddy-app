@@ -5,7 +5,6 @@ import { ChevronLeft } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { Chip } from "@/components/common/Chip";
 import { track } from "@/lib/mixpanel";
-import { apiFetch } from "@/lib/apiFetch";
 
 const Brand = "#FF883F";
 
@@ -100,7 +99,7 @@ export default function Page() {
 
     const fetchPost = async () => {
       try {
-        const res = await apiFetch(`/api/posts/senior/${id}`, { cache: "no-store" });
+        const res = await fetch(`/api/posts/senior/${id}`, { cache: "no-store" });
         const json = await res.json();
         if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 불러오지 못했습니다.");
         if (!active) return;
@@ -135,7 +134,7 @@ export default function Page() {
     if (!id) return;
     const fetchComments = async () => {
       try {
-        const res = await apiFetch(`/api/comments?postId=${id}&postType=senior`);
+        const res = await fetch(`/api/comments?postId=${id}&postType=senior`);
         const json = await res.json();
         if (res.ok && json?.success) {
           setComments(json.data ?? []);
@@ -153,7 +152,7 @@ export default function Page() {
 
     setIsSubmitting(true);
     try {
-      const res = await apiFetch("/api/comments", {
+      const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -399,7 +398,7 @@ export default function Page() {
                 }
                 try {
                   setIsStartingChat(true);
-                  const res = await apiFetch("/api/messages/thread", {
+                  const res = await fetch("/api/messages/thread", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

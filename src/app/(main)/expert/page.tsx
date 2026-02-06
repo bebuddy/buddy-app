@@ -10,7 +10,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNav from "@/components/BottomNav";
 import RefreshButton from "@/components/RefreshButton";
 import WriteButton from "@/components/WriteButton";
-import { apiFetch } from "@/lib/apiFetch";
 
 const BRAND = "#6163FF";
 
@@ -36,7 +35,7 @@ export default function ExpertPage() {
   async function refreshItemList() {
     setIsLoading(true);
     try {
-      const res = await apiFetch("/api/posts/senior?count=20", { cache: "no-store" });
+      const res = await fetch("/api/posts/senior?count=20", { cache: "no-store" });
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 불러오지 못했습니다.");
       const mapped: SeniorItem[] = (json.data ?? []).map((row: SeniorItem) => ({

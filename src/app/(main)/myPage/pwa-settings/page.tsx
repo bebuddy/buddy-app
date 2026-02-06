@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, Share, Plus } from "lucide-react"; // 아이콘 추가
-import { apiFetch } from "@/lib/apiFetch";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
@@ -32,7 +31,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
 async function subscribeUser(subscription: any) {
     try {
-        const res = await apiFetch('/api/notifications/subscribe', {
+        const res = await fetch('/api/notifications/subscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(subscription),
@@ -47,7 +46,7 @@ async function subscribeUser(subscription: any) {
 async function unsubscribeUser() {
     // 💡 구독 해제 시 DB에서 해당 endpoint를 삭제하도록 해야
     try {
-        const res = await apiFetch('/api/notifications/unsubscribe', {
+        const res = await fetch('/api/notifications/unsubscribe', {
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
         });
@@ -61,7 +60,7 @@ async function unsubscribeUser() {
 async function sendNotification(message: string) {
     // 💡 백엔드에서 테스트 알림을 발송하는 로직 필요
     try {
-        const res = await apiFetch('/api/notifications/send', {
+        const res = await fetch('/api/notifications/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message, userId: 'current_logged_in_user_uuid' }),

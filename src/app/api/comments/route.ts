@@ -1,10 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteSupabaseClient } from "@/lib/serverSupabase";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+
+async function createSupabaseClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_KEY as string,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          cookieStore.set({ name, value, ...options, path: "/" });
+        },
+        remove(name: string, options: any) {
+          cookieStore.delete({ name, ...options, path: "/" });
+        },
+      },
+    }
+  );
+}
 
 // GET: 댓글 목록 조회
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createRouteSupabaseClient();
+    const supabase = await createSupabaseClient();
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get("postId");
     const postType = searchParams.get("postType");
@@ -53,7 +76,7 @@ export async function GET(request: NextRequest) {
 // POST: 댓글 작성
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createRouteSupabaseClient();
+    const supabase = await createSupabaseClient();
 
     // 현재 로그인된 유저 확인
     const { data: { user } } = await supabase.auth.getUser();
