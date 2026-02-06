@@ -1,5 +1,4 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import { supabase } from '@/lib/supabase';
 
 export interface GoogleAuthResult {
   success: boolean;
@@ -22,6 +21,36 @@ export const isNativeIOS = (): boolean => {
   }
 };
 
+/**
+ * JWT에서 payload를 디코딩하여 세션 객체를 만들고 localStorage에 직접 저장.
+ * supabase.auth.setSession()은 내부적으로 네트워크 요청을 하는데,
+ * OAuth 인앱 브라우저에서 복귀 직후 "load failed"가 발생하므로 우회.
+ */
+function storeSessionManually(accessToken: string, refreshToken: string): void {
+  const payloadBase64 = accessToken.split('.')[1];
+  const payload = JSON.parse(atob(payloadBase64));
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+  const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
+  const storageKey = `sb-${projectRef}-auth-token`;
+
+  const session = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    token_type: 'bearer',
+    expires_in: payload.exp - Math.floor(Date.now() / 1000),
+    expires_at: payload.exp,
+    user: {
+      id: payload.sub,
+      aud: payload.aud,
+      role: payload.role,
+      email: payload.email,
+    },
+  };
+
+  localStorage.setItem(storageKey, JSON.stringify(session));
+}
+
 export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
   try {
     await GoogleAuth.initialize();
@@ -39,7 +68,6 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
 
     console.log('[GoogleAuth] Got callback URL');
 
-    // callback URL에서 토큰 파싱
     const callbackUrl = result.url;
     const hashPart = callbackUrl.split('#')[1];
 
@@ -55,27 +83,13 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
       return { success: false, error: 'Missing tokens in callback' };
     }
 
-    alert('[DEBUG-AUTH 1] setSession 시작');
+    // 네트워크 요청 없이 localStorage에 직접 세션 저장
+    storeSessionManually(accessToken, refreshToken);
+    console.log('[GoogleAuth] Session stored in localStorage');
 
-    try {
-      const { data, error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-
-      alert(`[DEBUG-AUTH 2] setSession 완료 - error: ${error?.message ?? 'none'}, user: ${data?.user?.id ?? 'null'}`);
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true };
-    } catch (e) {
-      alert(`[DEBUG-AUTH 3] setSession 예외: ${e instanceof Error ? e.message : String(e)}`);
-      return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
-    }
+    return { success: true };
   } catch (error) {
-    alert(`[DEBUG-AUTH 4] 전체 catch: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Native Google Sign-In error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred'
