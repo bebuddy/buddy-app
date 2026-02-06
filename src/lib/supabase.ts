@@ -13,13 +13,20 @@ function isNativeApp(): boolean {
   }
 }
 
-// iOS: createClient (localStorage 기반 + navigator.locks 우회)
+// WKWebView에서 navigator.locks가 hang되는 문제 우회
+// 안전을 위해 양쪽 클라이언트 모두 적용 (isNativeApp 판정이 잘못될 수 있음)
+const noopLock = async <R>(
+  _name: string,
+  _acquireTimeout: number,
+  fn: () => Promise<R>,
+): Promise<R> => await fn();
+
+// iOS: createClient (localStorage 기반)
 // Web: createBrowserClient (쿠키 기반, SSR 호환)
 export const supabase = isNativeApp()
   ? createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        // WKWebView에서 navigator.locks가 hang되는 문제 우회
-        lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => await fn(),
-      },
+      auth: { lock: noopLock },
     })
-  : createBrowserClient(supabaseUrl, supabaseKey);
+  : createBrowserClient(supabaseUrl, supabaseKey, {
+      auth: { lock: noopLock },
+    });
