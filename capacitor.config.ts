@@ -11,8 +11,8 @@ const config: CapacitorConfig = {
   plugins: {
     GoogleAuth: {
       scopes: ['profile', 'email'],
-      serverClientId: process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID || '',
-      iosClientId: process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID || '',
+      serverClientId: '81299150317-m8r55d5v034qrpdgshqf287ouq2ml5om.apps.googleusercontent.com',
+      iosClientId: '81299150317-68dvc0kap84cuas3k3iefrglcb1l5anh.apps.googleusercontent.com',
       forceCodeForRefreshToken: false,
     },
   },
