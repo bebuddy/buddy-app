@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { track } from "@/lib/mixpanel";
 import { Capacitor } from "@capacitor/core";
+import { isNativeIOS, signInWithGoogleNative } from "@/lib/googleAuth";
 
 export default function SigninPage() {
     const hasTracked = useRef(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (hasTracked.current) return;
@@ -28,10 +30,32 @@ export default function SigninPage() {
         return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
     };
 
-    // Google 로그인 함수
-    const handleGoogleSignin = async () => {
+    // iOS 네이티브 Google 로그인
+    const handleNativeGoogleSignIn = async () => {
+        setIsLoading(true);
         try {
-            track("sign_in_clicked", { provider: "google" });
+            track("sign_in_clicked", { provider: "google", method: "native_ios" });
+
+            const result = await signInWithGoogleNative();
+
+            if (result.success) {
+                window.location.href = '/verify';
+            } else {
+                console.error("Native Google Sign-In failed:", result.error);
+                alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+            }
+        } catch (error) {
+            console.error("Native Google Sign-In error:", error);
+            alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Google 로그인 함수 (웹 및 Android용)
+    const handleWebGoogleSignin = async () => {
+        try {
+            track("sign_in_clicked", { provider: "google", method: "web" });
 
             const isApp = isNativeApp();
             const baseUrl = window.location.origin;
@@ -55,6 +79,15 @@ export default function SigninPage() {
         }
     };
 
+    // Google 로그인 함수 - 플랫폼에 따라 분기
+    const handleGoogleSignin = async () => {
+        if (isNativeIOS()) {
+            await handleNativeGoogleSignIn();
+        } else {
+            await handleWebGoogleSignin();
+        }
+    };
+
     return (
         <>
             <div className="flex flex-col w-full items-center min-h-dvh justify-center">
@@ -75,7 +108,8 @@ export default function SigninPage() {
                 {/* ✅ Google 로그인 버튼 */}
                 <button
                     onClick={handleGoogleSignin}
-                    className="flex items-center justify-center gap-2 border border-gray-300 px-8 py-4 rounded-xl hover:bg-gray-100 active:bg-gray-100"
+                    disabled={isLoading}
+                    className="flex items-center justify-center gap-2 border border-gray-300 px-8 py-4 rounded-xl hover:bg-gray-100 active:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Image
                         src="/google-icon.png"
@@ -85,7 +119,7 @@ export default function SigninPage() {
                         className="object-contain"
                     />
                     <span className="font-bold-18 text-[#333] font-medium">
-                        Google로 시작하기
+                        {isLoading ? '로그인 중...' : 'Google로 시작하기'}
                     </span>
                 </button>
             </div>
