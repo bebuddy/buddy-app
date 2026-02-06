@@ -49,6 +49,14 @@ export default function DeepLinkHandler() {
       }
       handlingRef.current = true;
 
+      // 인앱 브라우저 닫기
+      try {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.close();
+      } catch (e) {
+        console.log("[DeepLink] Browser close error (ok if not open):", e);
+      }
+
       console.log("[DeepLink] Setting session...");
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
