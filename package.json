@@ -19,6 +19,7 @@
     "@capacitor/cli": "^8.0.2",
     "@capacitor/core": "^8.0.2",
     "@capacitor/ios": "^8.0.2",
+    "@codetrix-studio/capacitor-google-auth": "3.4.0-rc.4",
     "@prisma/client": "^7.2.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.58.0",
