@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAM_ID.com.kkanbu.buddyapp",
+        "paths": ["/app-auth-callback*"]
+      }
+    ]
+  }
+}

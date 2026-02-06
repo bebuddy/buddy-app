@@ -14,29 +14,13 @@ export default function SigninPage() {
         track("sign_in_viewed");
     }, []);
 
-    // 앱 환경 감지 (Capacitor 또는 User-Agent 기반)
+    // 앱 환경 감지
     const isNativeApp = () => {
-        // Capacitor 브릿지 확인
-        if (typeof window !== "undefined" && (window as unknown as { Capacitor?: unknown }).Capacitor) {
-            return true;
-        }
-        // Capacitor.isNativePlatform() 확인
         try {
-            if (Capacitor.isNativePlatform()) {
-                return true;
-            }
+            return Capacitor.isNativePlatform();
         } catch {
-            // Capacitor가 로드되지 않은 경우
+            return false;
         }
-        // User-Agent로 iOS 앱 WebView 감지
-        if (typeof navigator !== "undefined") {
-            const ua = navigator.userAgent;
-            // Capacitor iOS WebView 감지
-            if (ua.includes("Capacitor") || (ua.includes("iPhone") && !ua.includes("Safari"))) {
-                return true;
-            }
-        }
-        return false;
     };
 
     // 고유 세션 ID 생성
@@ -49,18 +33,22 @@ export default function SigninPage() {
         try {
             track("sign_in_clicked", { provider: "google" });
 
-            // 앱인 경우 app=true 파라미터와 session_id 추가
             const isApp = isNativeApp();
-            let loginUrl = "/api/auth/login?provider=google";
+            const baseUrl = window.location.origin;
+            let loginUrl = `${baseUrl}/api/auth/login?provider=google`;
 
             if (isApp) {
                 const sessionId = generateSessionId();
-                // localStorage에 session_id 저장 (앱으로 돌아왔을 때 폴링에 사용)
                 localStorage.setItem("pending_auth_session_id", sessionId);
                 loginUrl += `&app=true&session_id=${sessionId}`;
-            }
 
-            window.location.href = loginUrl;
+                // 앱에서는 인앱 브라우저 사용
+                const { Browser } = await import("@capacitor/browser");
+                await Browser.open({ url: loginUrl });
+            } else {
+                // 웹에서는 일반 리다이렉트
+                window.location.href = loginUrl;
+            }
         } catch (error) {
             console.error("Google login error:", error);
             alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
