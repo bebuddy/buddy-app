@@ -8,56 +8,50 @@ export default function VerifyPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const verify = async () => {
-      alert("[DEBUG 1] verify 시작");
+    // onAuthStateChange의 INITIAL_SESSION 이벤트를 사용하면
+    // 내부 초기화(토큰 교환 등)가 완료된 뒤에 안전하게 세션을 받을 수 있음
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        // INITIAL_SESSION: 초기화 완료 시점, SIGNED_IN: OAuth 콜백으로 새 세션
+        if (event !== "INITIAL_SESSION" && event !== "SIGNED_IN") return;
 
-      const { data: { user }, error } = await supabase.auth.getUser();
-      alert(`[DEBUG 2] getUser 결과 - user: ${user?.id ?? "null"}, error: ${error?.message ?? "none"}`);
+        const user = session?.user;
 
-      if (error || !user) {
-        alert("[DEBUG 2-1] 유저 없음 → /sign-in 이동");
-        return router.push("/sign-in");
-      }
+        if (!user) {
+          return router.push("/sign-in");
+        }
 
-      const authId = user.id;
+        const authId = user.id;
 
-      const { data: existing, error: selectErr } = await supabase
-        .from("users")
-        .select("id, status")
-        .eq("auth_id", authId)
-        .single();
-
-      alert(`[DEBUG 3] users 조회 - existing: ${JSON.stringify(existing)}, error: ${selectErr?.code ?? "none"} ${selectErr?.message ?? ""}`);
-
-      if (selectErr && selectErr.code !== "PGRST116") {
-        alert(`[DEBUG 3-1] DB 오류: ${selectErr.message}`);
-        return;
-      }
-
-      if (!existing) {
-        const { error: insertErr } = await supabase
+        const { data: existing, error: selectErr } = await supabase
           .from("users")
-          .insert({
-            auth_id: authId,
-            provider: "GOOGLE",
-            status: "PENDING",
-          });
-        if (insertErr) {
-          alert(`[DEBUG 4] insert 오류: ${insertErr.message}`);
+          .select("id, status")
+          .eq("auth_id", authId)
+          .single();
+
+        if (selectErr && selectErr.code !== "PGRST116") {
           return;
         }
-        alert("[DEBUG 5] 신규유저 → /sign-up 이동");
-        router.push(`/sign-up?auth_id=${authId}`);
-      } else if (existing.status === "PENDING") {
-        alert("[DEBUG 6] PENDING → /sign-up 이동");
-        router.push(`/sign-up?auth_id=${authId}`);
-      } else {
-        alert(`[DEBUG 7] status=${existing.status} → /junior 이동`);
-        router.push("/junior");
-      }
-    };
 
-    verify();
+        if (!existing) {
+          const { error: insertErr } = await supabase
+            .from("users")
+            .insert({
+              auth_id: authId,
+              provider: "GOOGLE",
+              status: "PENDING",
+            });
+          if (insertErr) return;
+          router.push(`/sign-up?auth_id=${authId}`);
+        } else if (existing.status === "PENDING") {
+          router.push(`/sign-up?auth_id=${authId}`);
+        } else {
+          router.push("/junior");
+        }
+      },
+    );
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
   return (
