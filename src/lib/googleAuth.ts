@@ -27,7 +27,9 @@ export const isNativeIOS = (): boolean => {
  * OAuth 인앱 브라우저에서 복귀 직후 "load failed"가 발생하므로 우회.
  */
 function storeSessionManually(accessToken: string, refreshToken: string): void {
-  const payloadBase64 = accessToken.split('.')[1];
+  const payloadBase64url = accessToken.split('.')[1];
+  // base64url → standard base64 변환
+  const payloadBase64 = payloadBase64url.replace(/-/g, '+').replace(/_/g, '/');
   const payload = JSON.parse(atob(payloadBase64));
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
