@@ -1,4 +1,5 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import { supabase } from '@/lib/supabase';
 
 export interface GoogleAuthResult {
   success: boolean;
@@ -54,31 +55,20 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
       return { success: false, error: 'Missing tokens in callback' };
     }
 
-    console.log('[GoogleAuth] Submitting tokens to server for session setup...');
+    console.log('[GoogleAuth] Setting session on client...');
 
-    // Form POST로 서버에 토큰 전달 (CORS 이슈 없음)
-    // 서버가 setSession 처리 후 /verify로 redirect
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/api/auth/set-session';
-    form.style.display = 'none';
+    // 클라이언트에서 직접 세션 설정
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
 
-    const input1 = document.createElement('input');
-    input1.type = 'hidden';
-    input1.name = 'access_token';
-    input1.value = accessToken;
-    form.appendChild(input1);
+    if (error) {
+      console.error('[GoogleAuth] setSession error:', error.message);
+      return { success: false, error: error.message };
+    }
 
-    const input2 = document.createElement('input');
-    input2.type = 'hidden';
-    input2.name = 'refresh_token';
-    input2.value = refreshToken;
-    form.appendChild(input2);
-
-    document.body.appendChild(form);
-    form.submit();
-
-    // form.submit()이 페이지를 이동시키므로 여기에 도달하지 않음
+    console.log('[GoogleAuth] Session set successfully');
     return { success: true };
   } catch (error) {
     console.error('Native Google Sign-In error:', error);
