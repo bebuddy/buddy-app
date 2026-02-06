@@ -9,8 +9,15 @@ export default function VerifyPage() {
 
   useEffect(() => {
     const verify = async () => {
+      alert("[DEBUG 1] verify 시작");
+
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) return router.push("/sign-in");
+      alert(`[DEBUG 2] getUser 결과 - user: ${user?.id ?? "null"}, error: ${error?.message ?? "none"}`);
+
+      if (error || !user) {
+        alert("[DEBUG 2-1] 유저 없음 → /sign-in 이동");
+        return router.push("/sign-in");
+      }
 
       const authId = user.id;
 
@@ -20,14 +27,14 @@ export default function VerifyPage() {
         .eq("auth_id", authId)
         .single();
 
+      alert(`[DEBUG 3] users 조회 - existing: ${JSON.stringify(existing)}, error: ${selectErr?.code ?? "none"} ${selectErr?.message ?? ""}`);
+
       if (selectErr && selectErr.code !== "PGRST116") {
-        alert("서버 오류가 발생했습니다.");
+        alert(`[DEBUG 3-1] DB 오류: ${selectErr.message}`);
         return;
       }
 
-      console.log(existing)
       if (!existing) {
-        // 신규 유저 insert
         const { error: insertErr } = await supabase
           .from("users")
           .insert({
@@ -36,14 +43,16 @@ export default function VerifyPage() {
             status: "PENDING",
           });
         if (insertErr) {
-          console.error(insertErr);
-          alert("회원 생성 중 오류가 발생했습니다.");
+          alert(`[DEBUG 4] insert 오류: ${insertErr.message}`);
           return;
         }
+        alert("[DEBUG 5] 신규유저 → /sign-up 이동");
         router.push(`/sign-up?auth_id=${authId}`);
       } else if (existing.status === "PENDING") {
+        alert("[DEBUG 6] PENDING → /sign-up 이동");
         router.push(`/sign-up?auth_id=${authId}`);
       } else {
+        alert(`[DEBUG 7] status=${existing.status} → /junior 이동`);
         router.push("/junior");
       }
     };
