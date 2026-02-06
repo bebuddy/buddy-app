@@ -21,36 +21,29 @@ export const isNativeIOS = (): boolean => {
   }
 };
 
+const PENDING_TOKENS_KEY = '__native_pending_tokens';
+
 /**
- * JWT에서 payload를 디코딩하여 세션 객체를 만들고 localStorage에 직접 저장.
- * supabase.auth.setSession()은 내부적으로 네트워크 요청을 하는데,
- * OAuth 인앱 브라우저에서 복귀 직후 "load failed"가 발생하므로 우회.
+ * OAuth 인앱 브라우저 복귀 직후에는 네트워크 "load failed"가 발생하므로
+ * setSession()을 바로 호출할 수 없음. 대신 임시 키에 토큰을 저장하고
+ * /verify 페이지에서 네트워크가 안정된 후 setSession()을 호출.
  */
-function storeSessionManually(accessToken: string, refreshToken: string): void {
-  const payloadBase64url = accessToken.split('.')[1];
-  // base64url → standard base64 변환
-  const payloadBase64 = payloadBase64url.replace(/-/g, '+').replace(/_/g, '/');
-  const payload = JSON.parse(atob(payloadBase64));
+export function storePendingNativeTokens(accessToken: string, refreshToken: string): void {
+  localStorage.setItem(PENDING_TOKENS_KEY, JSON.stringify({ accessToken, refreshToken }));
+}
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-  const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
-  const storageKey = `sb-${projectRef}-auth-token`;
+export function getPendingNativeTokens(): { accessToken: string; refreshToken: string } | null {
+  const raw = localStorage.getItem(PENDING_TOKENS_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
-  const session = {
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    token_type: 'bearer',
-    expires_in: payload.exp - Math.floor(Date.now() / 1000),
-    expires_at: payload.exp,
-    user: {
-      id: payload.sub,
-      aud: payload.aud,
-      role: payload.role,
-      email: payload.email,
-    },
-  };
-
-  localStorage.setItem(storageKey, JSON.stringify(session));
+export function clearPendingNativeTokens(): void {
+  localStorage.removeItem(PENDING_TOKENS_KEY);
 }
 
 export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
@@ -85,9 +78,9 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
       return { success: false, error: 'Missing tokens in callback' };
     }
 
-    // 네트워크 요청 없이 localStorage에 직접 세션 저장
-    storeSessionManually(accessToken, refreshToken);
-    console.log('[GoogleAuth] Session stored in localStorage');
+    // 임시 키에 토큰 저장 — /verify에서 setSession() 호출
+    storePendingNativeTokens(accessToken, refreshToken);
+    console.log('[GoogleAuth] Pending tokens stored for /verify');
 
     return { success: true };
   } catch (error) {
