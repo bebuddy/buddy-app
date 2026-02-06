@@ -19,7 +19,7 @@ export const supabase = isNativeApp()
   ? createClient(supabaseUrl, supabaseKey, {
       auth: {
         // WKWebView에서 navigator.locks가 hang되는 문제 우회
-        lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<unknown>) => await fn(),
+        lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => await fn(),
       },
     })
   : createBrowserClient(supabaseUrl, supabaseKey);
