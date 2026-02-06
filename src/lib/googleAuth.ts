@@ -55,23 +55,27 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
       return { success: false, error: 'Missing tokens in callback' };
     }
 
-    console.log('[GoogleAuth] Setting session on client...');
+    alert('[DEBUG-AUTH 1] setSession 시작');
 
-    // 클라이언트에서 직접 세션 설정
-    const { error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
+    try {
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
 
-    if (error) {
-      console.error('[GoogleAuth] setSession error:', error.message);
-      return { success: false, error: error.message };
+      alert(`[DEBUG-AUTH 2] setSession 완료 - error: ${error?.message ?? 'none'}, user: ${data?.user?.id ?? 'null'}`);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (e) {
+      alert(`[DEBUG-AUTH 3] setSession 예외: ${e instanceof Error ? e.message : String(e)}`);
+      return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
     }
-
-    console.log('[GoogleAuth] Session set successfully');
-    return { success: true };
   } catch (error) {
-    console.error('Native Google Sign-In error:', error);
+    alert(`[DEBUG-AUTH 4] 전체 catch: ${error instanceof Error ? error.message : String(error)}`);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred'
