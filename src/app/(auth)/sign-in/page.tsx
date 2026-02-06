@@ -1,25 +1,44 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { track } from "@/lib/mixpanel";
+import { isNativeIOS, signInWithGoogleNative } from "@/lib/googleAuth";
 
 export default function SigninPage() {
     const hasTracked = useRef(false);
+    const [isLoading, setIsLoading] = useState(false);
+
     useEffect(() => {
         if (hasTracked.current) return;
         hasTracked.current = true;
         track("sign_in_viewed");
     }, []);
 
-    // ✅ Google 로그인 함수 (Route Handler 경유)
+    // Google 로그인 함수
     const handleGoogleSignin = async () => {
+        setIsLoading(true);
         try {
             track("sign_in_clicked", { provider: "google" });
-            window.location.href = "/api/auth/login?provider=google";
+
+            if (isNativeIOS()) {
+                // iOS 네이티브 로그인
+                const result = await signInWithGoogleNative();
+                if (result.success) {
+                    window.location.href = '/verify';
+                } else {
+                    console.error("Native Google Sign-In failed:", result.error);
+                    alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+                }
+            } else {
+                // 웹 로그인
+                window.location.href = "/api/auth/login?provider=google";
+            }
         } catch (error) {
             console.error("Google login error:", error);
             alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -40,10 +59,11 @@ export default function SigninPage() {
                     <span>재밌게 행복하게 시작해보세요!</span>
                 </div>
 
-                {/* ✅ Google 로그인 버튼 */}
+                {/* Google 로그인 버튼 */}
                 <button
                     onClick={handleGoogleSignin}
-                    className="flex items-center justify-center gap-2 border border-gray-300 px-8 py-4 rounded-xl hover:bg-gray-100 active:bg-gray-100"
+                    disabled={isLoading}
+                    className="flex items-center justify-center gap-2 border border-gray-300 px-8 py-4 rounded-xl hover:bg-gray-100 active:bg-gray-100 disabled:opacity-50"
                 >
                     <Image
                         src="/google-icon.png"
@@ -53,7 +73,7 @@ export default function SigninPage() {
                         className="object-contain"
                     />
                     <span className="font-bold-18 text-[#333] font-medium">
-                        Google로 시작하기
+                        {isLoading ? "로그인 중..." : "Google로 시작하기"}
                     </span>
                 </button>
             </div>

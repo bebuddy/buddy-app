@@ -1,6 +1,7 @@
 import { Noto_Sans_KR } from "next/font/google";
 import "@/styles/globals.css";
 import MixpanelProvider from "@/components/MixpanelProvider";
+import DeepLinkHandler from "@/components/DeepLinkHandler";
 
 const notoSans = Noto_Sans_KR({
   subsets: ["latin"],
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <body className="min-h-dvh bg-neutral-50 text-neutral-900 antialiased font-sans">
         <MixpanelProvider>
+          <DeepLinkHandler />
           <div className="mx-auto min-h-dvh flex flex-col w-full max-w-[768px] bg-white shadow-xl">
             <main className="flex-1">{children}</main>
           </div>
