@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export async function POST(request: NextRequest) {
@@ -9,23 +8,25 @@ export async function POST(request: NextRequest) {
   const origin = request.nextUrl.origin;
 
   if (!accessToken || !refreshToken) {
-    return NextResponse.redirect(new URL("/sign-in?error=missing_tokens", origin));
+    return NextResponse.redirect(new URL("/sign-in?error=missing_tokens", origin), 303);
   }
 
-  const cookieStore = await cookies();
+  // 리다이렉트 응답을 먼저 생성하여 쿠키가 이 응답에 포함되도록 함
+  const response = NextResponse.redirect(new URL("/verify", origin), 303);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
     process.env.NEXT_PUBLIC_SUPABASE_KEY as string,
     {
       cookies: {
         get(name: string) {
-          return cookieStore.get(name)?.value;
+          return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: Record<string, unknown>) {
-          cookieStore.set({ name, value, ...options, path: "/" });
+          response.cookies.set({ name, value, ...options, path: "/" });
         },
         remove(name: string, options: Record<string, unknown>) {
-          cookieStore.delete({ name, ...options, path: "/" });
+          response.cookies.set({ name, value: "", ...options, path: "/" });
         },
       },
     }
@@ -38,9 +39,9 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     console.error("[set-session] setSession error:", error.message);
-    return NextResponse.redirect(new URL("/sign-in?error=session_failed", origin));
+    return NextResponse.redirect(new URL("/sign-in?error=session_failed", origin), 303);
   }
 
   console.log("[set-session] Session set successfully, redirecting to /verify");
-  return NextResponse.redirect(new URL("/verify", origin));
+  return response;
 }
