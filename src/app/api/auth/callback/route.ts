@@ -50,9 +50,8 @@ async function exchangeCodeForTokens(code: string, codeVerifier: string, redirec
 }
 
 
-// 앱으로 토큰 전달하는 HTML 페이지 반환
-function createAppReturnResponse(isError = false, errorMsg = "", tokens?: { accessToken: string; refreshToken: string }) {
-  // 에러인 경우
+// 앱으로 돌아가라는 HTML 페이지 반환
+function createAppReturnResponse(isError = false, errorMsg = "") {
   if (isError) {
     const html = `
       <!DOCTYPE html>
@@ -79,11 +78,7 @@ function createAppReturnResponse(isError = false, errorMsg = "", tokens?: { acce
     return new NextResponse(html, { headers: { "Content-Type": "text/html" } });
   }
 
-  // 성공인 경우: 딥링크로 토큰 전달
-  const deepLinkUrl = tokens
-    ? `buddyapp://auth?access_token=${encodeURIComponent(tokens.accessToken)}&refresh_token=${encodeURIComponent(tokens.refreshToken)}`
-    : "buddyapp://auth";
-
+  // 성공: 브라우저 닫기 안내
   const html = `
     <!DOCTYPE html>
     <html>
@@ -92,32 +87,22 @@ function createAppReturnResponse(isError = false, errorMsg = "", tokens?: { acce
         <title>로그인 완료</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-          body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
-          .container { text-align: center; padding: 20px; }
-          h1 { font-size: 24px; margin-bottom: 16px; }
-          p { color: #666; margin-bottom: 24px; line-height: 1.6; }
-          .btn { display: inline-block; background: #7C3AED; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-size: 18px; font-weight: 600; }
-          .loading { font-size: 48px; margin-bottom: 20px; }
+          body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+          .container { text-align: center; padding: 40px 20px; }
+          .icon { font-size: 80px; margin-bottom: 24px; }
+          h1 { font-size: 28px; margin-bottom: 16px; color: white; }
+          p { color: rgba(255,255,255,0.9); font-size: 18px; line-height: 1.6; margin-bottom: 8px; }
+          .hint { color: rgba(255,255,255,0.7); font-size: 14px; margin-top: 32px; }
         </style>
       </head>
       <body>
         <div class="container">
-          <div class="loading">⏳</div>
+          <div class="icon">✅</div>
           <h1>로그인 완료!</h1>
-          <p id="status">앱으로 이동 중...</p>
-          <a href="${deepLinkUrl}" class="btn" id="btn" style="display:none;">앱으로 돌아가기</a>
+          <p>이 창을 닫고</p>
+          <p><strong>벗 앱으로 돌아가주세요</strong></p>
+          <p class="hint">왼쪽 상단의 "완료" 또는 "X" 버튼을 눌러주세요</p>
         </div>
-        <script>
-          // 딥링크로 앱 열기 시도
-          window.location.href = "${deepLinkUrl}";
-
-          // 2초 후에도 여기 있으면 버튼 표시
-          setTimeout(function() {
-            document.getElementById('status').textContent = '앱이 열리지 않으면 버튼을 눌러주세요';
-            document.getElementById('btn').style.display = 'inline-block';
-            document.querySelector('.loading').textContent = '✅';
-          }, 2000);
-        </script>
       </body>
     </html>
   `;
@@ -157,11 +142,17 @@ export async function GET(request: NextRequest) {
         return createAppReturnResponse(true, "토큰을 받지 못했습니다.");
       }
 
-      // 딥링크로 토큰 전달
-      return createAppReturnResponse(false, "", {
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
+      // Supabase에 임시 토큰 저장
+      const supabaseAdmin = await createSupabaseClient();
+      await supabaseAdmin.from("pending_auth_sessions").upsert({
+        session_id: sessionId,
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        created_at: new Date().toISOString(),
       });
+
+      // 브라우저 닫기 안내 페이지 반환
+      return createAppReturnResponse(false, "");
     } catch (e) {
       console.error("App auth error:", e);
       const errorMsg = e instanceof Error ? e.message : String(e);
