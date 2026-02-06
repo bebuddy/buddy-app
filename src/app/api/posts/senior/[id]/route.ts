@@ -37,9 +37,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         category,
         title,
         content,
-        junior_level,
+        level,
         mentoring_way,
         dates_times,
+        junior_type,
+        junior_gender,
+        budget,
+        budget_type,
         image_url_l,
         user:user_id (
           auth_id,
@@ -63,7 +67,16 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       );
     }
 
-    return NextResponse.json({ success: true, data });
+    // 프론트엔드 필드명과 통일
+    const dt = data.dates_times as { day?: string[]; time?: string[] } | null;
+    const transformed = {
+      ...data,
+      class_type: data.mentoring_way,
+      days: dt?.day ?? [],
+      times: dt?.time ?? [],
+    };
+
+    return NextResponse.json({ success: true, data: transformed });
   } catch (error) {
     console.error("senior post detail error:", error);
     return NextResponse.json(

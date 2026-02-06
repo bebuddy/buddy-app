@@ -33,6 +33,9 @@ type SeniorPost = {
   days?: string[] | null;
   times?: string[] | null;
   junior_type?: string[] | null;
+  junior_gender?: string | null;
+  budget?: number | null;
+  budget_type?: string | null;
   image_url_l?: string | null;
   senior_info?: {
     class_num?: number | null;
@@ -233,7 +236,7 @@ export default function Page() {
 
         {/* 대표 이미지 */}
         {post.image_url_l && (
-          <div className="w-full h-[274px] bg-center bg-cover" style={{ backgroundImage: `url(${post.image_url_l})` }} />
+          <div className="w-full h-[274px] bg-center bg-cover" style={{ backgroundImage: `url('${post.image_url_l}')` }} />
         )}
 
         {/* 본문 */}
@@ -246,6 +249,7 @@ export default function Page() {
             </div>
             <div className="mt-4 flex gap-2">
               <Chip solid>{post.category}</Chip>
+              {post.level && <Chip>{post.level}</Chip>}
             </div>
           </div>
 
@@ -382,6 +386,36 @@ export default function Page() {
               {post.class_type && <Chip textSize={18}>{post.class_type}</Chip>}
             </div>
           </div>
+
+          {/* 선호 성별 */}
+          {post.junior_gender && post.junior_gender !== "상관없음" && (
+            <>
+              <SectionDivider className="mt-6" />
+              <div className="mt-6">
+                <div className="font-medium-20 text-neutral-900">선호하는 후배님</div>
+                <div className="mt-3">
+                  <Chip textSize={18}>{post.junior_gender}</Chip>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* 과외비 */}
+          {(post.budget != null || post.budget_type === "협의") && (
+            <>
+              <SectionDivider className="mt-6" />
+              <div className="mt-6">
+                <div className="font-medium-20 text-neutral-900">과외비</div>
+                <div className="mt-3">
+                  <Chip textSize={18}>
+                    {post.budget_type === "협의"
+                      ? "협의"
+                      : `${Number(post.budget).toLocaleString()}원 / ${post.budget_type ?? "시간"}`}
+                  </Chip>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* 하단 버튼 */}

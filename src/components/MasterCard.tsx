@@ -26,7 +26,7 @@ export default function MasterCard({
   const overlay =
     "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.15) 35%, rgba(255,255,255,0.90) 65%, rgba(255,255,255,1) 100%)";
   const bg = item.image_url_l
-    ? `${overlay}, url(${item.image_url_l})`
+    ? `${overlay}, url('${item.image_url_l}')`
     : `${overlay}, linear-gradient(180deg,#cfcfcf,#9e9e9e)`;
 
   const ageLabel = getKDecadeLabel(item.birth_date);
