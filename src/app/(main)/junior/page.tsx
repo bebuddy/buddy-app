@@ -32,8 +32,11 @@ export default function Page() {
   async function refreshItemList() {
     setIsLoading(true);
     try {
+      alert("[Junior] fetch 시작: /api/posts/junior?count=20");
       const res = await apiFetch("/api/posts/junior?count=20", { cache: "no-store" });
+      alert(`[Junior] 응답: status=${res.status}`);
       const json = await res.json();
+      alert(`[Junior] 파싱: success=${json?.success}, items=${Array.isArray(json?.data) ? json.data.length : "N/A"}`);
       if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 불러오지 못했습니다.");
       const mapped: Item[] = (json.data ?? []).map((row: Item & { image_url_m?: string | null; updated_at?: string | null }) => ({
         id: row.id,
@@ -45,6 +48,7 @@ export default function Page() {
       }));
       setItems(mapped);
     } catch (e) {
+      alert(`[Junior] 에러: ${e instanceof Error ? e.message : String(e)}`);
       console.error(e);
     } finally {
       setIsLoading(false);
