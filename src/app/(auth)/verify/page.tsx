@@ -9,6 +9,8 @@ import {
   clearPendingNativeTokens,
 } from "@/lib/googleAuth";
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+
 export default function VerifyPage() {
   const router = useRouter();
   const handlingRef = useRef(false);
@@ -46,9 +48,9 @@ export default function VerifyPage() {
       }
     };
 
-    // Native iOS pending tokens 감지
-    const pendingTokens = isNativeIOS() ? getPendingNativeTokens() : null;
-    // recovery 진행 중일 때 INITIAL_SESSION(null)을 무시하기 위한 플래그
+    // ── Native iOS 2단계 핸드오프 (진단 alert 포함) ──
+    const native = isNativeIOS();
+    const pendingTokens = native ? getPendingNativeTokens() : null;
     const nativeRecoveryInProgress = !!pendingTokens;
     let nativeRecoveryDone = false;
 
@@ -57,7 +59,6 @@ export default function VerifyPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       // Native recovery 진행 중 INITIAL_SESSION(null) 무시
-      // Supabase 키에 세션이 없으므로 null이 발생함
       if (
         nativeRecoveryInProgress &&
         !nativeRecoveryDone &&
@@ -78,42 +79,73 @@ export default function VerifyPage() {
         return;
       }
 
-      // setTimeout으로 _initialize() 체인을 끊어야 deadlock 방지
-      // onAuthStateChange 콜백은 _initialize() 내부에서 await되므로
-      // 여기서 supabase DB 쿼리를 하면 initializePromise 대기 → deadlock
+      // ── ALERT 6: onAuthStateChange 이벤트 확인 ──
+      if (nativeRecoveryInProgress) {
+        alert(`[ALERT 6] onAuthStateChange\nevent=${event}\nuser.id=${user.id}`);
+      }
+
       setTimeout(() => verifyUser(user.id), 0);
     });
 
-    // 2) Native iOS pending tokens가 있으면 setSession() 호출
+    // 2) Native iOS pending tokens → 진단 + setSession
     if (pendingTokens) {
-      const recoverNativeSession = async (retry = false) => {
-        console.log(`[verify] Recovering native session${retry ? " (retry)" : ""}...`);
-        const { error } = await supabase.auth.setSession({
+      (async () => {
+        // ── ALERT 1: 기본 상태 확인 ──
+        alert(
+          `[ALERT 1]\nisNativeIOS=${native}\nhasPendingTokens=true`
+        );
+
+        // ── ALERT 2: 토큰 미리보기 ──
+        alert(
+          `[ALERT 2] tokens preview\nAT=${pendingTokens.accessToken.substring(0, 20)}...\nRT=${pendingTokens.refreshToken.substring(0, 20)}...`
+        );
+
+        // ── ALERT 3: 네트워크 상태 ──
+        alert(
+          `[ALERT 3]\nnavigator.onLine=${navigator.onLine}\nSupabase URL=${SUPABASE_URL}`
+        );
+
+        // ── 네트워크 probe ──
+        let probeResult: string;
+        try {
+          const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+            method: "GET",
+            cache: "no-store",
+          });
+          probeResult = `ok=${res.ok}, status=${res.status}`;
+        } catch (e) {
+          probeResult = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
+        }
+
+        // ── ALERT 4: probe 결과 ──
+        alert(`[ALERT 4] network probe\n${probeResult}`);
+
+        // ── setSession 호출 ──
+        const { data, error } = await supabase.auth.setSession({
           access_token: pendingTokens.accessToken,
           refresh_token: pendingTokens.refreshToken,
         });
 
+        // ── ALERT 5: setSession 결과 ──
         if (error) {
-          console.error("[verify] setSession failed:", error.message);
-          if (!retry) {
-            // 500ms 후 1회 재시도
-            setTimeout(() => recoverNativeSession(true), 500);
-            return;
-          }
-          // 재시도도 실패 → sign-in으로
+          alert(
+            `[ALERT 5] setSession FAILED\n` +
+            `message=${error.message}\n` +
+            `name=${error.name}\n` +
+            `status=${error.status}`
+          );
           clearPendingNativeTokens();
           nativeRecoveryDone = true;
           router.push("/sign-in");
-          return;
+        } else {
+          alert(
+            `[ALERT 5] setSession SUCCESS\nuser.id=${data.session?.user?.id ?? "null"}`
+          );
+          clearPendingNativeTokens();
+          nativeRecoveryDone = true;
+          console.log("[verify] Native session recovered successfully");
         }
-
-        // 성공 — 토큰 정리, setSession()이 SIGNED_IN 이벤트를 발생시킴
-        clearPendingNativeTokens();
-        nativeRecoveryDone = true;
-        console.log("[verify] Native session recovered successfully");
-      };
-
-      recoverNativeSession();
+      })();
     }
 
     return () => subscription.unsubscribe();

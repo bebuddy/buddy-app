@@ -78,6 +78,13 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
       return { success: false, error: 'Missing tokens in callback' };
     }
 
+    // ALERT 0: 콜백 URL + 파싱된 토큰 확인
+    alert(
+      `[ALERT 0] callback URL:\n${callbackUrl.substring(0, 100)}...\n\n` +
+      `AT=${accessToken.substring(0, 20)}...\n` +
+      `RT=${refreshToken.substring(0, 20)}...`
+    );
+
     // 임시 키에 토큰 저장 — /verify에서 setSession() 호출
     storePendingNativeTokens(accessToken, refreshToken);
     console.log('[GoogleAuth] Pending tokens stored for /verify');
