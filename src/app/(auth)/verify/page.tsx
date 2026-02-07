@@ -16,6 +16,7 @@ export default function VerifyPage() {
   const handlingRef = useRef(false);
 
   useEffect(() => {
+    // ── Web 전용: DB 조회 후 라우팅 ──
     const verifyUser = async (authId: string) => {
       const { data: existing, error: selectErr } = await supabase
         .from("users")
@@ -48,27 +49,63 @@ export default function VerifyPage() {
       }
     };
 
-    // ── Native iOS 2단계 핸드오프 (진단 alert 포함) ──
     const native = isNativeIOS();
     const pendingTokens = native ? getPendingNativeTokens() : null;
-    const nativeRecoveryInProgress = !!pendingTokens;
-    let nativeRecoveryDone = false;
 
-    // 1) onAuthStateChange 리스너 먼저 등록
+    // ── Native iOS: 서버 API로 토큰 검증 + 라우팅 ──
+    // WKWebView에서 Supabase JS 내부 fetch가 "Load failed"이므로
+    // plain fetch()로 같은 origin 서버를 호출하여 우회
+    if (pendingTokens) {
+      (async () => {
+        try {
+          const res = await fetch("/api/auth/verify-native", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              accessToken: pendingTokens.accessToken,
+              refreshToken: pendingTokens.refreshToken,
+            }),
+          });
+
+          const result = await res.json();
+
+          if (!res.ok) {
+            console.error("[verify] verify-native failed:", result.error);
+            alert(`[DEBUG] verify-native failed: ${result.error}`);
+            clearPendingNativeTokens();
+            router.push("/sign-in");
+            return;
+          }
+
+          // Supabase 클라이언트가 다음 페이지에서 세션을 인식하도록
+          // localStorage에 세션을 수동 저장
+          const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0];
+          const storageKey = `sb-${projectRef}-auth-token`;
+          localStorage.setItem(storageKey, JSON.stringify(result.session));
+
+          clearPendingNativeTokens();
+          console.log("[verify] Native session stored, navigating...");
+          alert(`[DEBUG] verify-native OK! action=${result.action}`);
+
+          if (result.action === "sign-up") {
+            router.push(`/sign-up?auth_id=${result.authId}`);
+          } else {
+            router.push("/junior");
+          }
+        } catch (e) {
+          console.error("[verify] verify-native fetch error:", e);
+          alert(`[DEBUG] fetch error: ${e instanceof Error ? e.message : String(e)}`);
+          clearPendingNativeTokens();
+          router.push("/sign-in");
+        }
+      })();
+      return; // native flow에서는 onAuthStateChange 불필요
+    }
+
+    // ── Web: 기존 onAuthStateChange 기반 플로우 ──
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // Native recovery 진행 중 INITIAL_SESSION(null) 무시
-      if (
-        nativeRecoveryInProgress &&
-        !nativeRecoveryDone &&
-        event === "INITIAL_SESSION" &&
-        !session
-      ) {
-        console.log("[verify] Ignoring INITIAL_SESSION(null) during native recovery");
-        return;
-      }
-
       if (event !== "INITIAL_SESSION" && event !== "SIGNED_IN") return;
       if (handlingRef.current) return;
       handlingRef.current = true;
@@ -79,74 +116,8 @@ export default function VerifyPage() {
         return;
       }
 
-      // ── ALERT 6: onAuthStateChange 이벤트 확인 ──
-      if (nativeRecoveryInProgress) {
-        alert(`[ALERT 6] onAuthStateChange\nevent=${event}\nuser.id=${user.id}`);
-      }
-
       setTimeout(() => verifyUser(user.id), 0);
     });
-
-    // 2) Native iOS pending tokens → 진단 + setSession
-    if (pendingTokens) {
-      (async () => {
-        // ── ALERT 1: 기본 상태 확인 ──
-        alert(
-          `[ALERT 1]\nisNativeIOS=${native}\nhasPendingTokens=true`
-        );
-
-        // ── ALERT 2: 토큰 미리보기 ──
-        alert(
-          `[ALERT 2] tokens preview\nAT=${pendingTokens.accessToken.substring(0, 20)}...\nRT=${pendingTokens.refreshToken.substring(0, 20)}...`
-        );
-
-        // ── ALERT 3: 네트워크 상태 ──
-        alert(
-          `[ALERT 3]\nnavigator.onLine=${navigator.onLine}\nSupabase URL=${SUPABASE_URL}`
-        );
-
-        // ── 네트워크 probe ──
-        let probeResult: string;
-        try {
-          const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
-            method: "GET",
-            cache: "no-store",
-          });
-          probeResult = `ok=${res.ok}, status=${res.status}`;
-        } catch (e) {
-          probeResult = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
-        }
-
-        // ── ALERT 4: probe 결과 ──
-        alert(`[ALERT 4] network probe\n${probeResult}`);
-
-        // ── setSession 호출 ──
-        const { data, error } = await supabase.auth.setSession({
-          access_token: pendingTokens.accessToken,
-          refresh_token: pendingTokens.refreshToken,
-        });
-
-        // ── ALERT 5: setSession 결과 ──
-        if (error) {
-          alert(
-            `[ALERT 5] setSession FAILED\n` +
-            `message=${error.message}\n` +
-            `name=${error.name}\n` +
-            `status=${error.status}`
-          );
-          clearPendingNativeTokens();
-          nativeRecoveryDone = true;
-          router.push("/sign-in");
-        } else {
-          alert(
-            `[ALERT 5] setSession SUCCESS\nuser.id=${data.session?.user?.id ?? "null"}`
-          );
-          clearPendingNativeTokens();
-          nativeRecoveryDone = true;
-          console.log("[verify] Native session recovered successfully");
-        }
-      })();
-    }
 
     return () => subscription.unsubscribe();
   }, [router]);
