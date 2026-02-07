@@ -11,7 +11,6 @@ import RefreshButton from "@/components/RefreshButton";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNav from "@/components/BottomNav";
 import { apiFetch } from "@/lib/apiFetch";
-import { supabase } from "@/lib/supabase";
 const BRAND = "#6163FF";
 
 export type Item = {
@@ -33,21 +32,8 @@ export default function Page() {
   async function refreshItemList() {
     setIsLoading(true);
     try {
-      // 1) getSession 테스트
-      alert("[Junior] getSession 호출...");
-      const { data: sd } = await supabase.auth.getSession();
-      const tk = sd.session?.access_token;
-      alert(`[Junior] getSession 완료: token=${tk ? tk.substring(0, 15) + "..." : "null"}`);
-
-      // 2) plain fetch 테스트 (apiFetch 우회)
-      alert("[Junior] plain fetch 시작...");
-      const res = await fetch("/api/posts/junior?count=20", {
-        cache: "no-store",
-        headers: tk ? { Authorization: `Bearer ${tk}` } : {},
-      });
-      alert(`[Junior] 응답: status=${res.status}`);
+      const res = await apiFetch("/api/posts/junior?count=20", { cache: "no-store" });
       const json = await res.json();
-      alert(`[Junior] 파싱: success=${json?.success}, items=${Array.isArray(json?.data) ? json.data.length : "N/A"}`);
       if (!res.ok || !json?.success) throw new Error(json?.message ?? "게시글을 불러오지 못했습니다.");
       const mapped: Item[] = (json.data ?? []).map((row: Item & { image_url_m?: string | null; updated_at?: string | null }) => ({
         id: row.id,
@@ -59,7 +45,6 @@ export default function Page() {
       }));
       setItems(mapped);
     } catch (e) {
-      alert(`[Junior] 에러: ${e instanceof Error ? e.message : String(e)}`);
       console.error(e);
     } finally {
       setIsLoading(false);

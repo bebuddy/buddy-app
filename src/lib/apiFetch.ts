@@ -1,59 +1,48 @@
 import { supabase } from "@/lib/supabase";
+import { isNativeIOS } from "@/lib/googleAuth";
 
 type ApiFetchOptions = RequestInit & { auth?: boolean };
 
-// 디버깅: 첫 호출만 alert (매 호출마다 뜨면 너무 많으므로)
-let debugAlertShown = false;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
+/**
+ * Native iOS에서는 supabase.auth.getSession()이 내부 토큰 refresh 시도로
+ * WKWebView에서 hang되므로, localStorage에서 직접 토큰을 읽는다.
+ */
+function getAccessTokenDirect(): string | null {
+  try {
+    const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0];
+    const raw = localStorage.getItem(`sb-${projectRef}-auth-token`);
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    return session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function apiFetch(input: RequestInfo | URL, init: ApiFetchOptions = {}) {
   const { auth = true, headers, ...rest } = init;
   const mergedHeaders = new Headers(headers);
 
   if (auth && !mergedHeaders.has("Authorization")) {
-    try {
-      // ── ALERT D1: getSession 호출 전 localStorage 확인 ──
-      if (!debugAlertShown) {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-        const projectRef = supabaseUrl ? new URL(supabaseUrl).hostname.split(".")[0] : "unknown";
-        const storageKey = `sb-${projectRef}-auth-token`;
-        const raw = localStorage.getItem(storageKey);
-        alert(
-          `[ALERT D1] apiFetch 진입\n` +
-          `url=${String(input).substring(0, 60)}\n` +
-          `storageKey=${storageKey}\n` +
-          `localStorage 존재=${!!raw}\n` +
-          `localStorage 길이=${raw?.length ?? 0}`
-        );
-      }
+    let accessToken: string | null = null;
 
-      const { data, error } = await supabase.auth.getSession();
+    if (isNativeIOS()) {
+      // Native iOS: localStorage에서 직접 읽기 (getSession() hang 방지)
+      accessToken = getAccessTokenDirect();
+    } else {
+      // Web: 기존 getSession() 사용
+      try {
+        const { data } = await supabase.auth.getSession();
+        accessToken = data.session?.access_token ?? null;
+      } catch {
+        // fallback to cookie-based auth on web
+      }
+    }
 
-      // ── ALERT D2: getSession 결과 ──
-      if (!debugAlertShown) {
-        const accessToken = data.session?.access_token;
-        alert(
-          `[ALERT D2] getSession 결과\n` +
-          `session 존재=${!!data.session}\n` +
-          `access_token=${accessToken ? accessToken.substring(0, 20) + "..." : "null"}\n` +
-          `error=${error?.message ?? "none"}\n` +
-          `user.id=${data.session?.user?.id ?? "null"}`
-        );
-        debugAlertShown = true;
-      }
-
-      const accessToken = data.session?.access_token;
-      if (accessToken) {
-        mergedHeaders.set("Authorization", `Bearer ${accessToken}`);
-      }
-    } catch (e) {
-      // ── ALERT D3: getSession 예외 ──
-      if (!debugAlertShown) {
-        alert(
-          `[ALERT D3] getSession 예외\n` +
-          `${e instanceof Error ? e.message : String(e)}`
-        );
-        debugAlertShown = true;
-      }
+    if (accessToken) {
+      mergedHeaders.set("Authorization", `Bearer ${accessToken}`);
     }
   }
 
