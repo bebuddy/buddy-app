@@ -36,7 +36,7 @@ export default function TopBar() {
       <div
         aria-hidden
         className="w-full"
-        style={{ height: "calc(73px + env(safe-area-inset-top))" }}
+        style={{ height: "calc(57px + env(safe-area-inset-top))" }}
       />
 
       {/* 상단 고정 헤더 (경계선 없음) */}
@@ -46,7 +46,7 @@ export default function TopBar() {
           boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.06)",
         }}
       >
-        <div className="px-6 pt-[calc(env(safe-area-inset-top)+24px)] pb-[14px] flex items-center justify-between">
+        <div className="px-6 pt-[calc(env(safe-area-inset-top)+8px)] pb-[14px] flex items-center justify-between">
           <Image
             src="/logo.svg"
             alt="벗 로고"

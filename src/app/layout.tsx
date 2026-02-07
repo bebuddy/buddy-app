@@ -40,7 +40,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className="min-h-dvh bg-neutral-50 text-neutral-900 antialiased font-sans">
+      <body className="min-h-dvh bg-white text-neutral-900 antialiased font-sans">
         <MixpanelProvider>
           <DeepLinkHandler />
           <div className="mx-auto min-h-dvh flex flex-col w-full max-w-[768px] bg-white shadow-xl">
