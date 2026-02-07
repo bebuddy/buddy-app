@@ -14,7 +14,6 @@ function AuthHandler() {
             const error = searchParams.get("error");
 
             if (error) {
-                alert(`로그인 에러: ${error}\nURL: ${window.location.href}`);
                 window.location.href = "/sign-in";
                 return;
             }

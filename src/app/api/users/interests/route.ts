@@ -69,7 +69,6 @@ export async function POST(request: Request) {
     const payload = values.map((value) => ({ user_id: user.id, value }));
     const { data, error } = await supabase.from("interest").insert(payload).select("value");
     if (error) {
-      console.log(error)
       return NextResponse.json(
         { success: false, message: "관심사 저장 중 오류가 발생했습니다.(추가)" },
         { status: 500 }

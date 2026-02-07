@@ -83,7 +83,6 @@ export default function VerifyPage() {
           localStorage.setItem(storageKey, JSON.stringify(result.session));
 
           clearPendingNativeTokens();
-          console.log("[verify] Native session stored, navigating...");
 
           // window.location.href로 풀 리로드 → Supabase가 localStorage에서
           // 세션을 다시 읽어 apiFetch()의 Bearer 토큰이 정상 작동

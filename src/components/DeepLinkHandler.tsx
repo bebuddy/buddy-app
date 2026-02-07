@@ -18,8 +18,6 @@ export default function DeepLinkHandler() {
       if (!sessionId) return;
       if (handlingRef.current) return;
 
-      console.log("[Auth] Checking pending session:", sessionId);
-
       try {
         const { data, error } = await supabase
           .from("pending_auth_sessions")
@@ -28,12 +26,10 @@ export default function DeepLinkHandler() {
           .single();
 
         if (error || !data) {
-          console.log("[Auth] No pending session found");
           return;
         }
 
         handlingRef.current = true;
-        console.log("[Auth] Found pending session, setting up...");
 
         // 토큰으로 세션 설정
         const { error: sessionError } = await supabase.auth.setSession({
@@ -61,10 +57,8 @@ export default function DeepLinkHandler() {
           const { Browser } = await import("@capacitor/browser");
           await Browser.close();
         } catch (e) {
-          console.log("[Auth] Browser close skipped");
+          // Browser close skipped on web
         }
-
-        console.log("[Auth] Success! Redirecting to /verify");
         window.location.href = "/verify";
       } catch (e) {
         console.error("[Auth] Check error:", e);
@@ -76,7 +70,6 @@ export default function DeepLinkHandler() {
     let stateListener: PluginListenerHandle | null = null;
     App.addListener("appStateChange", ({ isActive }) => {
       if (isActive) {
-        console.log("[Auth] App became active, checking session...");
         checkPendingSession();
       }
     }).then((handle) => {

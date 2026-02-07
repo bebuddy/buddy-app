@@ -38,7 +38,6 @@ async function subscribeUser(subscription: any) {
             body: JSON.stringify(subscription),
         });
         if (!res.ok) throw new Error("Subscription API failed.");
-        console.log("Subscription sent to server successfully.");
     } catch (error) {
         console.error("Error during subscription API call:", error);
     }
@@ -52,7 +51,6 @@ async function unsubscribeUser() {
             headers: { 'Content-Type': 'application/json' },
         });
         if (!res.ok) throw new Error("Unsubscribe API failed.");
-        console.log("Unsubscription processed by server.");
     } catch (error) {
         console.error("Error during unsubscription API call:", error);
     }

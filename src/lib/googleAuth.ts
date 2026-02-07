@@ -54,14 +54,10 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
     const redirectTo = 'buddyapp://auth/callback';
     const authUrl = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
 
-    console.log('[GoogleAuth] Opening OAuth URL...');
-
     const result = await GoogleAuth.signInWithOAuth({
       url: authUrl,
       callbackScheme: 'buddyapp',
     });
-
-    console.log('[GoogleAuth] Got callback URL');
 
     const callbackUrl = result.url;
     const hashPart = callbackUrl.split('#')[1];
@@ -80,7 +76,6 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
 
     // 임시 키에 토큰 저장 — /verify에서 서버 API로 검증
     storePendingNativeTokens(accessToken, refreshToken);
-    console.log('[GoogleAuth] Pending tokens stored for /verify');
 
     return { success: true };
   } catch (error) {

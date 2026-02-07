@@ -42,6 +42,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in?error=session_failed", origin), 303);
   }
 
-  console.log("[set-session] Session set successfully, redirecting to /verify");
   return response;
 }
