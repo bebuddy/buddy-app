@@ -10,6 +10,12 @@ const notoSans = Noto_Sans_KR({
 });
 
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export const metadata = {
   title: "Buddy App",
   description: "중장년 친화 메인 피드",
