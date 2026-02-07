@@ -297,7 +297,7 @@ export default function Page() {
     <div className="w-full flex justify-center">
       <div className="w-full max-w-[768px] min-h-screen bg-white">
         {/* 상단: 뒤로 */}
-        <div className="h-12 flex items-center px-2">
+        <div className="h-12 flex items-center px-2" style={{ marginTop: "env(safe-area-inset-top)" }}>
           <button
             onClick={() => router.back()}
             className="p-2 rounded-full hover:bg-neutral-100 active:bg-neutral-200"

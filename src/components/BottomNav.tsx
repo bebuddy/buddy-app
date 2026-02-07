@@ -16,8 +16,11 @@ export default function BottomNav() {
   return (
     // 바깥: 위치 고정 + 기기폭 컨테이너
     <nav
-      className="bg-white fixed z-[1900] left-1/2 -translate-x-1/2 w-full max-w-[768px] pointer-events-none py-4"
-      style={{ bottom: "env(safe-area-inset-bottom)", boxShadow: '0px -2px 19px rgba(0,0,0,0.04)' }}
+      className="bg-white fixed z-[1900] bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] pointer-events-none py-4"
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom)",
+        boxShadow: '0px -2px 19px rgba(0,0,0,0.04)',
+      }}
     >
       {/* 안쪽: 실제 바 */}
       <div className="pointer-events-auto h-[64px] bg-white flex items-center justify-around">

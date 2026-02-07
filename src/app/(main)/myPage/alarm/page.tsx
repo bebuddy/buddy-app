@@ -102,8 +102,11 @@ export default function AlarmPage() {
   
   return (
     <div
-      className="px-4 pt-4 pb-6"
-      style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }}
+      className="px-4 pb-6"
+      style={{
+        paddingTop: "calc(16px + env(safe-area-inset-top))",
+        paddingBottom: "calc(64px + env(safe-area-inset-bottom))",
+      }}
     >
       {/* 상단 Back */}
       <div className="flex items-center gap-2 mb-4">

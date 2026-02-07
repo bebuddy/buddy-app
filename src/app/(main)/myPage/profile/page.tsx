@@ -10,7 +10,7 @@ export default function ProfilePage() {
   const router = useRouter();
 
   return (
-    <div className="p-4">
+    <div className="p-4" style={{ paddingTop: "calc(16px + env(safe-area-inset-top))" }}>
       {/* 상단 Back (MyPage와 UI 통일) */}
       <div className="flex items-center gap-2">
         <button
