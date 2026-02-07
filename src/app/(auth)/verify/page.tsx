@@ -71,9 +71,8 @@ export default function VerifyPage() {
 
           if (!res.ok) {
             console.error("[verify] verify-native failed:", result.error);
-            alert(`[DEBUG] verify-native failed: ${result.error}`);
             clearPendingNativeTokens();
-            router.push("/sign-in");
+            window.location.href = "/sign-in";
             return;
           }
 
@@ -85,18 +84,18 @@ export default function VerifyPage() {
 
           clearPendingNativeTokens();
           console.log("[verify] Native session stored, navigating...");
-          alert(`[DEBUG] verify-native OK! action=${result.action}`);
 
+          // window.location.href로 풀 리로드 → Supabase가 localStorage에서
+          // 세션을 다시 읽어 apiFetch()의 Bearer 토큰이 정상 작동
           if (result.action === "sign-up") {
-            router.push(`/sign-up?auth_id=${result.authId}`);
+            window.location.href = `/sign-up?auth_id=${result.authId}`;
           } else {
-            router.push("/junior");
+            window.location.href = "/junior";
           }
         } catch (e) {
           console.error("[verify] verify-native fetch error:", e);
-          alert(`[DEBUG] fetch error: ${e instanceof Error ? e.message : String(e)}`);
           clearPendingNativeTokens();
-          router.push("/sign-in");
+          window.location.href = "/sign-in";
         }
       })();
       return; // native flow에서는 onAuthStateChange 불필요
