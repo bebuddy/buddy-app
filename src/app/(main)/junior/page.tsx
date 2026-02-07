@@ -11,6 +11,7 @@ import RefreshButton from "@/components/RefreshButton";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNav from "@/components/BottomNav";
 import { apiFetch } from "@/lib/apiFetch";
+import { supabase } from "@/lib/supabase";
 const BRAND = "#6163FF";
 
 export type Item = {
@@ -32,8 +33,18 @@ export default function Page() {
   async function refreshItemList() {
     setIsLoading(true);
     try {
-      alert("[Junior] fetch 시작: /api/posts/junior?count=20");
-      const res = await apiFetch("/api/posts/junior?count=20", { cache: "no-store" });
+      // 1) getSession 테스트
+      alert("[Junior] getSession 호출...");
+      const { data: sd } = await supabase.auth.getSession();
+      const tk = sd.session?.access_token;
+      alert(`[Junior] getSession 완료: token=${tk ? tk.substring(0, 15) + "..." : "null"}`);
+
+      // 2) plain fetch 테스트 (apiFetch 우회)
+      alert("[Junior] plain fetch 시작...");
+      const res = await fetch("/api/posts/junior?count=20", {
+        cache: "no-store",
+        headers: tk ? { Authorization: `Bearer ${tk}` } : {},
+      });
       alert(`[Junior] 응답: status=${res.status}`);
       const json = await res.json();
       alert(`[Junior] 파싱: success=${json?.success}, items=${Array.isArray(json?.data) ? json.data.length : "N/A"}`);
