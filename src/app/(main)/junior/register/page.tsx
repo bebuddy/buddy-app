@@ -11,10 +11,15 @@ import LabeledTextarea from "@/components/LabeledTextarea";
 import ChipGroup from "@/components/ChipGroup";
 import PriceInput from "@/components/PriceInput";
 import PhotoUpload from "@/components/PhotoUpload";
+import IncomingCallToast from "@/components/voice-call/IncomingCallToast";
+import VoiceCallScreen from "@/components/voice-call/VoiceCallScreen";
 import type { RegisterJuniorReq } from "@/types/postType";
 import { BudgetType, ClassType, GenderType, TimeType } from "@/types/postType";
 import { track } from "@/lib/mixpanel";
 import { apiFetch } from "@/lib/apiFetch";
+import { useVoiceCallStore } from "@/lib/voiceCallStore";
+import { useRealtimeCall } from "@/hooks/useRealtimeCall";
+import { isNativeIOS } from "@/lib/googleAuth";
 
 // (백엔드 연동은 나중에 붙일 예정이므로 타입만 지역 선언)
 type Unit = "시간" | "건당";
@@ -88,6 +93,80 @@ export default function WritePage() {
 
   const [fileKeys, setFileKeys] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCallToast, setShowCallToast] = useState(() => !isNativeIOS());
+
+  // Voice call
+  const isCallActive = useVoiceCallStore((s) => s.isCallActive);
+  const draft = useVoiceCallStore((s) => s.draft);
+  const clearDraft = useVoiceCallStore((s) => s.clearDraft);
+  const { startCall, endCall, isConnecting, audioLevel, error: callError } = useRealtimeCall();
+
+  // Apply draft to form when call ends
+  const prevCallActive = useRef(false);
+  useEffect(() => {
+    if (prevCallActive.current && !isCallActive && Object.keys(draft).length > 0) {
+      if (draft.category) setCategory(draft.category as string);
+      if (draft.title) setTitle(draft.title as string);
+      if (draft.content) setDesc(draft.content as string);
+      if (draft.level) setLevel(draft.level as (typeof LEVELS)[number]);
+      if (draft.seniorGender) {
+        const genderMap: Record<string, (typeof MENTOR_GENDER)[number]> = {
+          "남성": "남자 선배님", "여성": "여자 선배님", "상관없음": "상관없음",
+        };
+        const mapped = genderMap[draft.seniorGender as string];
+        if (mapped) setMentorGender(mapped);
+      }
+      if (Array.isArray(draft.seniorType) && draft.seniorType.length > 0) {
+        setMentorTypes(draft.seniorType as (typeof MENTOR_TYPES)[number][]);
+      }
+      if (draft.classType) {
+        const classMap: Record<string, (typeof MEET_PREF)[number]> = {
+          "대면": "대면이 좋아요", "비대면": "비대면이 좋아요", "상관없음": "상관없어요",
+        };
+        const mapped = classMap[draft.classType as string];
+        if (mapped) setMeetPref(mapped);
+      }
+      if (draft.daysNegotiable) {
+        setDays([DAY_AGREE]);
+      } else if (Array.isArray(draft.days) && draft.days.length > 0) {
+        setDays(draft.days as (typeof DAYS)[number][]);
+      }
+      if (draft.timesNegotiable) {
+        setTimes([TIME_AGREE]);
+      } else if (Array.isArray(draft.times) && draft.times.length > 0) {
+        const timeReverseMap: Record<string, (typeof TIMES)[number]> = {
+          "아침": "아침 (06:00 ~ 10:00)", "오전": "오전 (10:00 ~ 12:00)",
+          "오후": "오후 (12:00 ~ 18:00)", "저녁": "저녁 (18:00 ~ 22:00)", "야간": "야간 (22:00 이후)",
+        };
+        setTimes((draft.times as string[]).map((t) => timeReverseMap[t] ?? t) as (typeof TIMES)[number][]);
+      }
+      if (draft.budgetType === "협의") {
+        setNegotiable(true);
+      } else {
+        if (draft.budget !== undefined && draft.budget !== null) {
+          setPrice(String(draft.budget));
+        }
+        if (draft.budgetType === "시간" || draft.budgetType === "건당") {
+          setUnit(draft.budgetType as Unit);
+        }
+      }
+      clearDraft();
+    }
+    prevCallActive.current = isCallActive;
+  }, [isCallActive, draft, clearDraft]);
+
+  const handleAcceptCall = async () => {
+    setShowCallToast(false);
+    await startCall("junior");
+  };
+
+  const handleDeclineCall = () => {
+    setShowCallToast(false);
+  };
+
+  const handleEndCall = () => {
+    endCall();
+  };
 
   // Mixpanel: register_started & register_exited
   const hasTrackedRef = useRef(false);
@@ -274,9 +353,37 @@ export default function WritePage() {
 
   return (
     <>
+      {/* Voice call overlay */}
+      {isCallActive && (
+        <VoiceCallScreen audioLevel={audioLevel} onEndCall={handleEndCall} />
+      )}
+
+      {/* Connecting overlay */}
+      {isConnecting && (
+        <div className="fixed inset-0 z-[9998] bg-black/60 flex items-center justify-center">
+          <div className="text-white text-center">
+            <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-sm">연결 중...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Call error toast */}
+      {callError && !isCallActive && (
+        <div className="mx-4 mt-3 p-3 rounded-xl bg-red-50 border border-red-200">
+          <p className="text-red-700 text-sm">{callError}</p>
+        </div>
+      )}
+
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70">
         <RegisterActionBar isValid={isValid && !isSubmitting} onSubmit={handleSubmit} brand={BRAND} />
       </div>
+
+      {/* Incoming call toast */}
+      {showCallToast && !isCallActive && (
+        <IncomingCallToast onAccept={handleAcceptCall} onDecline={handleDeclineCall} />
+      )}
+
       <div className="px-4" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
 
         {/* 카테고리(접이식) */}
