@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
  * 서버에서 토큰 검증 + 유저 조회를 수행하고 JSON으로 반환.
  */
 export async function POST(request: NextRequest) {
-  const { accessToken, refreshToken } = await request.json();
+  const { accessToken, refreshToken, provider = 'google' } = await request.json();
 
   if (!accessToken || !refreshToken) {
     return NextResponse.json({ error: "missing_tokens" }, { status: 400 });
@@ -49,9 +49,10 @@ export async function POST(request: NextRequest) {
   let action: string;
 
   if (!existing) {
+    const dbProvider = provider === 'apple' ? 'APPLE' : 'GOOGLE';
     const { error: insertErr } = await supabase.from("users").insert({
       auth_id: authId,
-      provider: "GOOGLE",
+      provider: dbProvider,
       status: "PENDING",
     });
     if (insertErr) {

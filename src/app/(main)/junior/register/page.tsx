@@ -19,7 +19,7 @@ import { track } from "@/lib/mixpanel";
 import { apiFetch } from "@/lib/apiFetch";
 import { useVoiceCallStore } from "@/lib/voiceCallStore";
 import { useRealtimeCall } from "@/hooks/useRealtimeCall";
-import { isNativeIOS } from "@/lib/googleAuth";
+import { isNativeIOS } from "@/lib/nativeAuth";
 
 // (백엔드 연동은 나중에 붙일 예정이므로 타입만 지역 선언)
 type Unit = "시간" | "건당";

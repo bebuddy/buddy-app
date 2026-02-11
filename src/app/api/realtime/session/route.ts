@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         instructions,
         tools,
         turn_detection: { type: "server_vad" },
-        input_audio_transcription: { model: "gpt-4o-mini-transcribe" },
+        input_audio_transcription: { model: "whisper-1", language: "ko" },
       }),
     });
 

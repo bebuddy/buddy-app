@@ -7,7 +7,7 @@ import {
   isNativeIOS,
   getPendingNativeTokens,
   clearPendingNativeTokens,
-} from "@/lib/googleAuth";
+} from "@/lib/nativeAuth";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 
@@ -17,7 +17,7 @@ export default function VerifyPage() {
 
   useEffect(() => {
     // ── Web 전용: DB 조회 후 라우팅 ──
-    const verifyUser = async (authId: string) => {
+    const verifyUser = async (authId: string, providerRaw?: string) => {
       const { data: existing, error: selectErr } = await supabase
         .from("users")
         .select("id, status")
@@ -30,11 +30,12 @@ export default function VerifyPage() {
       }
 
       if (!existing) {
+        const dbProvider = providerRaw === "apple" ? "APPLE" : "GOOGLE";
         const { error: insertErr } = await supabase
           .from("users")
           .insert({
             auth_id: authId,
-            provider: "GOOGLE",
+            provider: dbProvider,
             status: "PENDING",
           });
         if (insertErr) {
@@ -64,6 +65,7 @@ export default function VerifyPage() {
             body: JSON.stringify({
               accessToken: pendingTokens.accessToken,
               refreshToken: pendingTokens.refreshToken,
+              provider: pendingTokens.provider,
             }),
           });
 
@@ -114,7 +116,8 @@ export default function VerifyPage() {
         return;
       }
 
-      setTimeout(() => verifyUser(user.id), 0);
+      const providerRaw = user.app_metadata?.provider;
+      setTimeout(() => verifyUser(user.id, providerRaw), 0);
     });
 
     return () => subscription.unsubscribe();

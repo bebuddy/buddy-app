@@ -53,8 +53,8 @@ export default function IncomingCallToast({ onAccept, onDecline }: IncomingCallT
 
         {/* Text */}
         <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold text-sm">AI 상담원</p>
-          <p className="text-gray-300 text-xs mt-0.5">
+          <p className="text-white font-semibold text-lg">AI 상담원</p>
+          <p className="text-gray-300 text-base mt-0.5">
             AI가 대화로 게시글을 작성해드릴까요?
           </p>
         </div>

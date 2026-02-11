@@ -96,12 +96,12 @@ export default function VoiceCallScreen({ audioLevel, onEndCall }: VoiceCallScre
           </div>
         </div>
 
-        <p className="text-white font-semibold text-lg">AI 상담원</p>
-        <p className="text-gray-400 text-sm mt-1 font-mono">{minutes}:{seconds}</p>
+        <p className="text-white font-semibold text-2xl">AI 상담원</p>
+        <p className="text-gray-400 text-lg mt-1 font-mono">{minutes}:{seconds}</p>
 
         {/* Progress */}
         <div className="mt-3 px-4 py-1.5 rounded-full bg-white/10">
-          <span className="text-white/80 text-xs">
+          <span className="text-white/80 text-base">
             {filled}/{TOTAL_FIELDS} 항목 완료
           </span>
         </div>
@@ -114,7 +114,7 @@ export default function VoiceCallScreen({ audioLevel, onEndCall }: VoiceCallScre
         style={{ scrollBehavior: "smooth" }}
       >
         {transcript.length === 0 && (
-          <p className="text-center text-gray-500 text-sm mt-8">
+          <p className="text-center text-gray-500 text-lg mt-8">
             대화가 시작되면 여기에 표시됩니다...
           </p>
         )}
@@ -124,10 +124,10 @@ export default function VoiceCallScreen({ audioLevel, onEndCall }: VoiceCallScre
             className={`mb-3 flex ${entry.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+              className={`max-w-[80%] px-4 py-3 rounded-2xl text-lg leading-relaxed ${
                 entry.role === "user"
-                  ? "bg-indigo-500 text-white rounded-br-md"
-                  : "bg-white/15 text-white/90 rounded-bl-md"
+                  ? "bg-indigo-500 text-white font-medium rounded-br-md"
+                  : "bg-white/30 text-white font-medium rounded-bl-md"
               }`}
             >
               {entry.text}

@@ -1,6 +1,8 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
-export interface GoogleAuthResult {
+export type OAuthProvider = 'google' | 'apple';
+
+export interface NativeAuthResult {
   success: boolean;
   error?: string;
 }
@@ -28,11 +30,11 @@ const PENDING_TOKENS_KEY = '__native_pending_tokens';
  * setSession()을 바로 호출할 수 없음. 대신 임시 키에 토큰을 저장하고
  * /verify 페이지에서 네트워크가 안정된 후 setSession()을 호출.
  */
-export function storePendingNativeTokens(accessToken: string, refreshToken: string): void {
-  localStorage.setItem(PENDING_TOKENS_KEY, JSON.stringify({ accessToken, refreshToken }));
+export function storePendingNativeTokens(accessToken: string, refreshToken: string, provider: OAuthProvider): void {
+  localStorage.setItem(PENDING_TOKENS_KEY, JSON.stringify({ accessToken, refreshToken, provider }));
 }
 
-export function getPendingNativeTokens(): { accessToken: string; refreshToken: string } | null {
+export function getPendingNativeTokens(): { accessToken: string; refreshToken: string; provider: OAuthProvider } | null {
   const raw = localStorage.getItem(PENDING_TOKENS_KEY);
   if (!raw) return null;
   try {
@@ -46,13 +48,13 @@ export function clearPendingNativeTokens(): void {
   localStorage.removeItem(PENDING_TOKENS_KEY);
 }
 
-export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
+export const signInWithOAuthNative = async (provider: OAuthProvider): Promise<NativeAuthResult> => {
   try {
     await GoogleAuth.initialize();
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const redirectTo = 'buddyapp://auth/callback';
-    const authUrl = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+    const authUrl = `${supabaseUrl}/auth/v1/authorize?provider=${provider}&redirect_to=${encodeURIComponent(redirectTo)}`;
 
     const result = await GoogleAuth.signInWithOAuth({
       url: authUrl,
@@ -74,12 +76,11 @@ export const signInWithGoogleNative = async (): Promise<GoogleAuthResult> => {
       return { success: false, error: 'Missing tokens in callback' };
     }
 
-    // 임시 키에 토큰 저장 — /verify에서 서버 API로 검증
-    storePendingNativeTokens(accessToken, refreshToken);
+    storePendingNativeTokens(accessToken, refreshToken, provider);
 
     return { success: true };
   } catch (error) {
-    console.error('Native Google Sign-In error:', error);
+    console.error(`Native ${provider} Sign-In error:`, error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred'

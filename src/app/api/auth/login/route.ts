@@ -36,7 +36,7 @@ function generateCodeChallenge(codeVerifier: string): string {
 }
 
 export async function GET(request: NextRequest) {
-  const provider = (request.nextUrl.searchParams.get("provider") ?? "google") as "google";
+  const provider = (request.nextUrl.searchParams.get("provider") ?? "google") as "google" | "apple";
   const isApp = request.nextUrl.searchParams.get("app") === "true";
   const sessionId = request.nextUrl.searchParams.get("session_id");
 

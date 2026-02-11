@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { isNativeIOS } from "@/lib/googleAuth";
+import { isNativeIOS } from "@/lib/nativeAuth";
 
 type ApiFetchOptions = RequestInit & { auth?: boolean };
 
