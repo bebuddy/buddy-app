@@ -233,7 +233,7 @@ export function useRealtimeCall() {
         await pc.setLocalDescription(offer);
 
         // 8. Send offer to OpenAI, get answer
-        const model = "gpt-realtime";
+        const model = "gpt-realtime-2025-08-28";
         const sdpRes = await fetch(`${REALTIME_URL}?model=${model}`, {
           method: "POST",
           headers: {
