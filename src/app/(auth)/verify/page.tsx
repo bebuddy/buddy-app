@@ -124,8 +124,8 @@ export default function VerifyPage() {
   }, [router]);
 
   return (
-    <div className="flex justify-center items-center min-h-screen text-gray-600">
-      로그인 확인 중입니다...
+    <div className="flex justify-center items-center min-h-screen">
+      <div className="w-10 h-10 border-4 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
     </div>
   );
 }
