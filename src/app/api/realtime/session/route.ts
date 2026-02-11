@@ -47,20 +47,12 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        type: "realtime",
-        model: "gpt-realtime-2025-08-28",
+        model: "gpt-realtime",
         voice: "coral",
         instructions,
         tools,
         turn_detection: { type: "server_vad" },
-        audio: {
-          input: {
-            transcription: {
-              language: "ko",
-              model: "whisper-1",
-            },
-          },
-        },
+        input_audio_transcription: { model: "gpt-4o-mini-transcribe", language: "ko" },
       }),
     });
 
