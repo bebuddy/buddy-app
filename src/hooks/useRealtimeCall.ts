@@ -219,6 +219,10 @@ export function useRealtimeCall() {
         const dc = pc.createDataChannel("oai-events");
         dcRef.current = dc;
         dc.onmessage = handleDataChannelMessage;
+        dc.onopen = () => {
+          // AI가 먼저 인사하도록 response 생성 요청
+          dc.send(JSON.stringify({ type: "response.create" }));
+        };
 
         // 6. ICE connection state monitoring
         pc.oniceconnectionstatechange = () => {
