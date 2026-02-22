@@ -7,6 +7,8 @@ import {
   isNativeIOS,
   getPendingNativeTokens,
   clearPendingNativeTokens,
+  getNativeAppleIdToken,
+  clearNativeAppleIdToken,
 } from "@/lib/nativeAuth";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -51,9 +53,49 @@ export default function VerifyPage() {
     };
 
     const native = isNativeIOS();
+    const appleIdToken = native ? getNativeAppleIdToken() : null;
     const pendingTokens = native ? getPendingNativeTokens() : null;
 
-    // ── Native iOS: 서버 API로 토큰 검증 + 라우팅 ──
+    // ── Native iOS Apple: identityToken으로 signInWithIdToken ──
+    if (appleIdToken) {
+      (async () => {
+        try {
+          const res = await fetch("/api/auth/apple-native", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identityToken: appleIdToken }),
+          });
+
+          const result = await res.json();
+
+          if (!res.ok) {
+            console.error("[verify] apple-native failed:", result.error);
+            clearNativeAppleIdToken();
+            window.location.href = "/sign-in";
+            return;
+          }
+
+          const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0];
+          const storageKey = `sb-${projectRef}-auth-token`;
+          localStorage.setItem(storageKey, JSON.stringify(result.session));
+
+          clearNativeAppleIdToken();
+
+          if (result.action === "sign-up") {
+            window.location.href = `/sign-up?auth_id=${result.authId}`;
+          } else {
+            window.location.href = "/junior";
+          }
+        } catch (e) {
+          console.error("[verify] apple-native fetch error:", e);
+          clearNativeAppleIdToken();
+          window.location.href = "/sign-in";
+        }
+      })();
+      return;
+    }
+
+    // ── Native iOS Google: 서버 API로 토큰 검증 + 라우팅 ──
     // WKWebView에서 Supabase JS 내부 fetch가 "Load failed"이므로
     // plain fetch()로 같은 origin 서버를 호출하여 우회
     if (pendingTokens) {

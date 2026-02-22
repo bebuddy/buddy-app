@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { track } from "@/lib/mixpanel";
-import { isNativeIOS, signInWithOAuthNative, OAuthProvider } from "@/lib/nativeAuth";
+import { isNativeIOS, signInWithOAuthNative, signInWithAppleNative, OAuthProvider } from "@/lib/nativeAuth";
 
 export default function SigninPage() {
     const hasTracked = useRef(false);
@@ -21,7 +21,12 @@ export default function SigninPage() {
             track("sign_in_clicked", { provider });
 
             if (isNativeIOS()) {
-                const result = await signInWithOAuthNative(provider);
+                let result;
+                if (provider === 'apple') {
+                    result = await signInWithAppleNative();
+                } else {
+                    result = await signInWithOAuthNative(provider);
+                }
                 if (result.success) {
                     window.location.href = '/verify';
                 } else {

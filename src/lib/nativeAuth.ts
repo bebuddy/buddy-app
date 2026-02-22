@@ -10,6 +10,7 @@ export interface NativeAuthResult {
 interface GoogleAuthPlugin {
   initialize(): Promise<void>;
   signInWithOAuth(options: { url: string; callbackScheme: string }): Promise<{ url: string }>;
+  signInWithApple(): Promise<{ identityToken: string }>;
   signOut(): Promise<void>;
 }
 
@@ -24,6 +25,7 @@ export const isNativeIOS = (): boolean => {
 };
 
 const PENDING_TOKENS_KEY = '__native_pending_tokens';
+const APPLE_ID_TOKEN_KEY = '__native_apple_id_token';
 
 /**
  * OAuth 인앱 브라우저 복귀 직후에는 네트워크 "load failed"가 발생하므로
@@ -47,6 +49,34 @@ export function getPendingNativeTokens(): { accessToken: string; refreshToken: s
 export function clearPendingNativeTokens(): void {
   localStorage.removeItem(PENDING_TOKENS_KEY);
 }
+
+export function storeNativeAppleIdToken(identityToken: string): void {
+  localStorage.setItem(APPLE_ID_TOKEN_KEY, identityToken);
+}
+
+export function getNativeAppleIdToken(): string | null {
+  return localStorage.getItem(APPLE_ID_TOKEN_KEY);
+}
+
+export function clearNativeAppleIdToken(): void {
+  localStorage.removeItem(APPLE_ID_TOKEN_KEY);
+}
+
+export const signInWithAppleNative = async (): Promise<NativeAuthResult> => {
+  try {
+    const result = await GoogleAuth.signInWithApple();
+
+    storeNativeAppleIdToken(result.identityToken);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Native Apple Sign-In error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+};
 
 export const signInWithOAuthNative = async (provider: OAuthProvider): Promise<NativeAuthResult> => {
   try {
