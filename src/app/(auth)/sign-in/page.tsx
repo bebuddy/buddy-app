@@ -31,7 +31,7 @@ export default function SigninPage() {
                     window.location.href = '/verify';
                 } else {
                     console.error(`Native ${provider} Sign-In failed:`, result.error);
-                    alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+                    alert(result.error ?? "로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
                 }
             } else if (isNativeAndroid() && provider === 'google') {
                 const result = await signInWithGoogleNativeAndroid();
@@ -39,14 +39,14 @@ export default function SigninPage() {
                     window.location.href = '/verify';
                 } else {
                     console.error('Android native Google Sign-In failed:', result.error);
-                    alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+                    alert(result.error ?? "로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
                 }
             } else {
                 window.location.href = `/api/auth/login?provider=${provider}`;
             }
         } catch (error) {
             console.error(`${provider} login error:`, error);
-            alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+            alert(error instanceof Error ? error.message : "로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
         } finally {
             setIsLoading(null);
         }

@@ -45,6 +45,46 @@ export const isNativePlatform = (): boolean => {
 const PENDING_TOKENS_KEY = '__native_pending_tokens';
 const APPLE_ID_TOKEN_KEY = '__native_apple_id_token';
 
+function formatNativeAuthError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error && typeof error === 'object') {
+    const maybeError = error as Record<string, unknown>;
+    const code = typeof maybeError.code === 'string' || typeof maybeError.code === 'number'
+      ? String(maybeError.code)
+      : null;
+    const message = typeof maybeError.message === 'string'
+      ? maybeError.message
+      : null;
+
+    if (code && message) {
+      return `${message} (code: ${code})`;
+    }
+
+    if (message) {
+      return message;
+    }
+
+    if (code) {
+      return `Google Sign-In failed (code: ${code})`;
+    }
+
+    try {
+      return JSON.stringify(maybeError);
+    } catch {
+      return 'Unknown error occurred';
+    }
+  }
+
+  return 'Unknown error occurred';
+}
+
 /**
  * OAuth 인앱 브라우저 복귀 직후에는 네트워크 "load failed"가 발생하므로
  * setSession()을 바로 호출할 수 없음. 대신 임시 키에 토큰을 저장하고
@@ -98,7 +138,10 @@ export const signInWithAppleNative = async (): Promise<NativeAuthResult> => {
 
 export const signInWithGoogleNativeAndroid = async (): Promise<NativeAuthResult> => {
   try {
-    await GoogleAuthStd.initialize();
+    await GoogleAuthStd.initialize({
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      scopes: ['profile', 'email'],
+    });
     const result = await GoogleAuthStd.signIn();
 
     const idToken = result.authentication?.idToken;
@@ -132,7 +175,7 @@ export const signInWithGoogleNativeAndroid = async (): Promise<NativeAuthResult>
     console.error('Android native Google Sign-In error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      error: formatNativeAuthError(error),
     };
   }
 };
@@ -172,7 +215,7 @@ export const signInWithOAuthNative = async (provider: OAuthProvider): Promise<Na
     console.error(`Native ${provider} Sign-In error:`, error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: formatNativeAuthError(error)
     };
   }
 };
