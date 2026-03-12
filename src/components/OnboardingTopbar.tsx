@@ -40,7 +40,7 @@ export default function OnboardingTopbar({
               type="button"
               onClick={onSkip}
               className="absolute top-1/2 -translate-y-1/2 text-[14px] text-neutral-600"
-              style={{ right: `calc(16px + env(safe-area-inset-right))` }}
+              style={{ right: `calc(16px + var(--safe-area-inset-right))` }}
             >
               나중에 하기
             </button>

@@ -139,7 +139,7 @@ export default function ChatPage() {
     <>
       <div
         className="px-4 py-6"
-        style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(64px + var(--safe-area-inset-bottom))" }}
       >
         {/* 상단 헤더 */}
         <TopBar />

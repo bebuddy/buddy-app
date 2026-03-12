@@ -226,7 +226,7 @@ export default function Page() {
     <div className="w-full flex justify-center">
       <div className="w-full max-w-[768px] min-h-screen bg-white relative">
         {/* 상단: 뒤로 */}
-        <div className="h-12 flex items-center px-2" style={{ marginTop: "env(safe-area-inset-top)" }}>
+        <div className="h-12 flex items-center px-2" style={{ marginTop: "var(--safe-area-inset-top)" }}>
           <button
             onClick={() => router.back()}
             className="p-2 rounded-full hover:bg-neutral-100 active:bg-neutral-200"
@@ -420,7 +420,7 @@ export default function Page() {
         </div>
 
         {/* 하단 버튼 */}
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] px-5 pb-[env(safe-area-inset-bottom)] bg-white/80 backdrop-blur">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] px-5 pb-[var(--safe-area-inset-bottom)] bg-white/80 backdrop-blur">
           <div className="py-3 pb-8 flex items-center">
             <button
               className="w-full h-[62px] rounded-xl text-white font-bold-20"

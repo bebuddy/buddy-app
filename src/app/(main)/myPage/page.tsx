@@ -109,8 +109,8 @@ export default function MyPage() {
     <div
       className="px-4 pb-6"
       style={{
-        paddingTop: "calc(16px + env(safe-area-inset-top))",
-        paddingBottom: "calc(64px + env(safe-area-inset-bottom))",
+        paddingTop: "calc(16px + var(--safe-area-inset-top))",
+        paddingBottom: "calc(64px + var(--safe-area-inset-bottom))",
       }}
     >
       {/* 상단 Back */}

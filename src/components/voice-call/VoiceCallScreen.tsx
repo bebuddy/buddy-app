@@ -71,8 +71,8 @@ export default function VoiceCallScreen({ audioLevel, onEndCall }: VoiceCallScre
       className="fixed inset-0 z-[9999] flex flex-col"
       style={{
         background: "linear-gradient(180deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
-        paddingTop: "env(safe-area-inset-top)",
-        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingTop: "var(--safe-area-inset-top)",
+        paddingBottom: "var(--safe-area-inset-bottom)",
       }}
     >
       {/* Top section: Avatar + Timer */}

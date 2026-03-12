@@ -15,7 +15,7 @@ export default function OnboardingComplete() {
 
       <div
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] p-4"
-        style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(16px + var(--safe-area-inset-bottom))" }}
       >
          <button
           onClick={handleStart}

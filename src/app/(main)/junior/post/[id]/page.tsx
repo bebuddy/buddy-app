@@ -297,7 +297,7 @@ export default function Page() {
     <div className="w-full flex justify-center">
       <div className="w-full max-w-[768px] min-h-screen bg-white">
         {/* 상단: 뒤로 */}
-        <div className="h-12 flex items-center px-2" style={{ marginTop: "env(safe-area-inset-top)" }}>
+        <div className="h-12 flex items-center px-2" style={{ marginTop: "var(--safe-area-inset-top)" }}>
           <button
             onClick={() => router.back()}
             className="p-2 rounded-full hover:bg-neutral-100 active:bg-neutral-200"
@@ -470,7 +470,7 @@ export default function Page() {
         </div>
 
         {/* 하단 채팅 버튼 (expert 상세와 동일 톤) */}
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] px-5 pb-[env(safe-area-inset-bottom)] bg-white/80 backdrop-blur">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] px-5 pb-[var(--safe-area-inset-bottom)] bg-white/80 backdrop-blur">
           <div className="py-3 pb-8 flex items-center">
             <button
               className="w-full h-[62px] rounded-xl text-white font-bold-20"
@@ -483,7 +483,7 @@ export default function Page() {
           </div>
         </div>
 
-        <div style={{ height: "calc(16px + env(safe-area-inset-bottom))" }} />
+        <div style={{ height: "calc(16px + var(--safe-area-inset-bottom))" }} />
       </div>
     </div>
   );

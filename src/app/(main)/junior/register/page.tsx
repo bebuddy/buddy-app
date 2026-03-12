@@ -384,7 +384,7 @@ export default function WritePage() {
         <IncomingCallToast onAccept={handleAcceptCall} onDecline={handleDeclineCall} />
       )}
 
-      <div className="px-4" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
+      <div className="px-4" style={{ paddingBottom: "calc(16px + var(--safe-area-inset-bottom))" }}>
 
         {/* 카테고리(접이식) */}
         <Disclosure

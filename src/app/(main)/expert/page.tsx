@@ -64,7 +64,7 @@ export default function ExpertPage() {
   return (
     <div
       className="px-4"
-      style={{ paddingBottom: "calc(100px + env(safe-area-inset-bottom))" }} // 하단 네비 대비
+      style={{ paddingBottom: "calc(100px + var(--safe-area-inset-bottom))" }} // 하단 네비 대비
     >
 
       <TopBar />
@@ -93,7 +93,7 @@ export default function ExpertPage() {
       {/* 등록하기 버튼 - floating */}
       <div
         className="fixed left-0 right-0 pointer-events-none"
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 130px)" }}
+        style={{ bottom: "calc(var(--safe-area-inset-bottom) + 130px)" }}
       >
         <div className="mx-auto max-w-[768px] px-4 flex justify-end">
           <div className="pointer-events-auto">

@@ -18,7 +18,7 @@ export default function BottomNav() {
     <nav
       className="bg-white fixed z-[1900] bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[768px] pointer-events-none py-4"
       style={{
-        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingBottom: "var(--safe-area-inset-bottom)",
         boxShadow: '0px -2px 19px rgba(0,0,0,0.04)',
       }}
     >
