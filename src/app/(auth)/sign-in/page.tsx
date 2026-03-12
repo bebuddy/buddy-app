@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { track } from "@/lib/mixpanel";
-import { isNativeIOS, isNativeAndroid, signInWithOAuthNative, signInWithAppleNative, OAuthProvider } from "@/lib/nativeAuth";
+import { isNativeIOS, isNativeAndroid, signInWithOAuthNative, signInWithAppleNative, signInWithGoogleNativeAndroid, OAuthProvider } from "@/lib/nativeAuth";
 
 export default function SigninPage() {
     const hasTracked = useRef(false);
@@ -31,6 +31,14 @@ export default function SigninPage() {
                     window.location.href = '/verify';
                 } else {
                     console.error(`Native ${provider} Sign-In failed:`, result.error);
+                    alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
+                }
+            } else if (isNativeAndroid() && provider === 'google') {
+                const result = await signInWithGoogleNativeAndroid();
+                if (result.success) {
+                    window.location.href = '/verify';
+                } else {
+                    console.error('Android native Google Sign-In failed:', result.error);
                     alert("로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
                 }
             } else {

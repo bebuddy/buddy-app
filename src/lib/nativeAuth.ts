@@ -1,4 +1,6 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import { GoogleAuth as GoogleAuthStd } from '@codetrix-studio/capacitor-google-auth';
+import { supabase } from '@/lib/supabase';
 
 export type OAuthProvider = 'google' | 'apple';
 
@@ -87,6 +89,35 @@ export const signInWithAppleNative = async (): Promise<NativeAuthResult> => {
     return { success: true };
   } catch (error) {
     console.error('Native Apple Sign-In error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+};
+
+export const signInWithGoogleNativeAndroid = async (): Promise<NativeAuthResult> => {
+  try {
+    await GoogleAuthStd.initialize();
+    const result = await GoogleAuthStd.signIn();
+
+    const idToken = result.authentication?.idToken;
+    if (!idToken) {
+      return { success: false, error: 'No ID token from Google Sign-In' };
+    }
+
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: idToken,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Android native Google Sign-In error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
