@@ -106,16 +106,28 @@ export const signInWithGoogleNativeAndroid = async (): Promise<NativeAuthResult>
       return { success: false, error: 'No ID token from Google Sign-In' };
     }
 
-    const { error } = await supabase.auth.signInWithIdToken({
-      provider: 'google',
-      token: idToken,
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
+    // Android WebView의 네트워크가 Google Sign-In 액티비티 복귀 후 안정화될 때까지 재시도
+    let lastError: string | undefined;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
+      try {
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: idToken,
+        });
+        if (error) {
+          lastError = error.message;
+          continue;
+        }
+        return { success: true };
+      } catch (fetchErr) {
+        lastError = fetchErr instanceof Error ? fetchErr.message : 'Fetch failed';
+      }
     }
 
-    return { success: true };
+    return { success: false, error: lastError };
   } catch (error) {
     console.error('Android native Google Sign-In error:', error);
     return {
