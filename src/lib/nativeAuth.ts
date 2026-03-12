@@ -24,6 +24,22 @@ export const isNativeIOS = (): boolean => {
   }
 };
 
+export const isNativeAndroid = (): boolean => {
+  try {
+    return Capacitor.getPlatform() === 'android';
+  } catch {
+    return false;
+  }
+};
+
+export const isNativePlatform = (): boolean => {
+  try {
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
+};
+
 const PENDING_TOKENS_KEY = '__native_pending_tokens';
 const APPLE_ID_TOKEN_KEY = '__native_apple_id_token';
 

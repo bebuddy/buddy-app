@@ -16,7 +16,7 @@ import { track } from "@/lib/mixpanel";
 import { apiFetch } from "@/lib/apiFetch";
 import { useVoiceCallStore } from "@/lib/voiceCallStore";
 import { useRealtimeCall } from "@/hooks/useRealtimeCall";
-import { isNativeIOS } from "@/lib/nativeAuth";
+import { isNativePlatform } from "@/lib/nativeAuth";
 
 const LEVELS = ["고수", "초고수", "신"] as const;
 const GENDER_PREF = ["여자 후배님", "남자 후배님", "상관없음"] as const;
@@ -83,7 +83,7 @@ export default function ExpertRegisterPage() {
   const [unit, setUnit] = useState<Unit | null>(null);
   const [negotiable, setNegotiable] = useState(false);
   const [fileKeys, setFileKeys] = useState<string[]>([]);
-  const [showCallToast, setShowCallToast] = useState(() => !isNativeIOS());
+  const [showCallToast, setShowCallToast] = useState(() => !isNativePlatform());
 
   // Voice call
   const isCallActive = useVoiceCallStore((s) => s.isCallActive);

@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { track } from "@/lib/mixpanel";
-import { isNativeIOS, signInWithOAuthNative, signInWithAppleNative, OAuthProvider } from "@/lib/nativeAuth";
+import { isNativeIOS, isNativeAndroid, signInWithOAuthNative, signInWithAppleNative, OAuthProvider } from "@/lib/nativeAuth";
 
 export default function SigninPage() {
     const hasTracked = useRef(false);
@@ -63,7 +63,8 @@ export default function SigninPage() {
 
                 {/* 로그인 버튼들 */}
                 <div className="flex flex-col gap-3 w-full max-w-[320px]">
-                    {/* Apple 로그인 버튼 */}
+                    {/* Apple 로그인 버튼 (Android 네이티브에서는 숨김) */}
+                    {!isNativeAndroid() && (
                     <button
                         onClick={() => handleSignin('apple')}
                         disabled={isLoading !== null}
@@ -76,6 +77,7 @@ export default function SigninPage() {
                             {isLoading === 'apple' ? "로그인 중..." : "Apple로 시작하기"}
                         </span>
                     </button>
+                    )}
 
                     {/* Google 로그인 버튼 */}
                     <button

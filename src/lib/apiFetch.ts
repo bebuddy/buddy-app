@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { isNativeIOS } from "@/lib/nativeAuth";
+import { isNativePlatform } from "@/lib/nativeAuth";
 
 type ApiFetchOptions = RequestInit & { auth?: boolean };
 
@@ -28,7 +28,7 @@ export async function apiFetch(input: RequestInfo | URL, init: ApiFetchOptions =
   if (auth && !mergedHeaders.has("Authorization")) {
     let accessToken: string | null = null;
 
-    if (isNativeIOS()) {
+    if (isNativePlatform()) {
       // Native iOS: localStorage에서 직접 읽기 (getSession() hang 방지)
       accessToken = getAccessTokenDirect();
     } else {
