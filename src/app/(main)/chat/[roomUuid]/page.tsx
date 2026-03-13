@@ -1,7 +1,7 @@
 // src/app/(main)/chat/[roomUuid]/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import { SimpleUserDto, UserMessageViewDto } from "@/types/chat.dto";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/apiFetch";
@@ -12,7 +12,7 @@ import MessageInput from "@/components/MessageInput";
 import { useRouter } from "next/navigation";
 
 interface ChatRoomPageProps {
-  params: { roomUuid: string };
+  params: Promise<{ roomUuid: string }>;
 }
 
 type PostSummary = { id: string; title: string; type: "junior" | "senior"; thumbnail?: string | null };
@@ -34,6 +34,7 @@ const fallbackUser = (uuid: string, name = "상대방"): SimpleUserDto => ({
 });
 
 export default function ChatRoomPage({ params }: ChatRoomPageProps) {
+  const { roomUuid } = use(params);
   const [messages, setMessages] = useState<UserMessageViewDto[]>([]);
   const [partnerInfo, setPartnerInfo] = useState<SimpleUserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +54,7 @@ export default function ChatRoomPage({ params }: ChatRoomPageProps) {
       setMyUserId(myId);
 
       try {
-        const res = await apiFetch(`/api/messages/${params.roomUuid}/messages`, { cache: "no-store" });
+        const res = await apiFetch(`/api/messages/${roomUuid}/messages`, { cache: "no-store" });
         const json = await res.json();
         if (!res.ok || !json?.success) {
           throw new Error(json?.message ?? "메시지를 불러올 수 없습니다.");
@@ -96,7 +97,7 @@ export default function ChatRoomPage({ params }: ChatRoomPageProps) {
             message: row.body,
             sender: sender ?? fallbackUser(row.sender_id, "상대방"),
             receiver: receiver ?? fallbackUser(senderIsMe ? "partner" : myId || "me"),
-            roomUuid: params.roomUuid,
+            roomUuid: roomUuid,
             createdDate: row.created_at,
             elapsedCreatedDate: "",
             isRead: row.is_read,
@@ -121,7 +122,7 @@ export default function ChatRoomPage({ params }: ChatRoomPageProps) {
     };
 
     void load();
-  }, [params.roomUuid]);
+  }, [roomUuid]);
 
   const handleSendMessage = async (newMessageText: string) => {
     if (isFirstMessage) {
@@ -140,7 +141,7 @@ export default function ChatRoomPage({ params }: ChatRoomPageProps) {
       message: newMessageText,
       sender: fallbackUser(myUserId, "나"),
       receiver: partner,
-      roomUuid: params.roomUuid,
+      roomUuid: roomUuid,
       createdDate: new Date().toISOString(),
       elapsedCreatedDate: "방금",
       isRead: false,
@@ -153,7 +154,7 @@ export default function ChatRoomPage({ params }: ChatRoomPageProps) {
     setMessages((prev) => [...prev, optimistic]);
 
     try {
-      const res = await apiFetch(`/api/messages/${params.roomUuid}/messages`, {
+      const res = await apiFetch(`/api/messages/${roomUuid}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body: newMessageText }),
